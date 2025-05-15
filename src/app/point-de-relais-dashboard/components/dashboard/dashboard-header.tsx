@@ -96,7 +96,6 @@ export function DashboardHeader({
                             className="absolute right-2.5 top-2.5 text-muted-foreground hover:text-foreground"
                         >
                             <X className="h-4 w-4" />
-                            <span>Effacer la recherche</span>
                         </button>
                     )}
                 </form>

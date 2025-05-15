@@ -6,7 +6,7 @@ import {
     CardHeader,
     CardTitle,
 } from '@/components/ui/card';
-import { AlertCircle, Clock, Package, PackageCheck } from 'lucide-react';
+import { AlertCircle, Clock, Package, PackageCheck, Truck } from 'lucide-react';
 import { StatCard } from '@/app/point-de-relais-dashboard/components/dashboard/stat-card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ActivityChart } from '@/app/point-de-relais-dashboard/components/dashboard/activity-chart';
@@ -72,6 +72,18 @@ export default function DashboardOverview() {
                                 <PackageCheck className="h-4 w-4 text-muted-foreground" />
                             }
                             detailsUrl={`${basePath}/livraison`}
+                        />
+
+                        {/* Carte "Réceptionnés aujourd'hui" */}
+                        <StatCard
+                            title="Réceptionnés aujourd'hui"
+                            value="14"
+                            description="Sur 16 prévus"
+                            trend={{ value: '+3', direction: 'up' }}
+                            icon={
+                                <Truck className="h-4 w-4 text-muted-foreground" />
+                            }
+                            detailsUrl={`${basePath}/reception`}
                         />
                     </div>
                 </CardContent>

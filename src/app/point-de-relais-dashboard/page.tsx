@@ -8,7 +8,7 @@ export const metadata: Metadata = {
 };
 export default function PointDeRelaisDashboardPage() {
     return (
-        <div className="flex flex-col gap-4 p-4 md:p-6">
+        <div className="flex flex-col gap-4 p-4 md:p-8 w-full ">
             <DashboardHeader />
             <DashboardOverview />
         </div>
