@@ -13,13 +13,15 @@ import java.util.List;
 public interface PointRelaisRepository extends JpaRepository<PointRelais, Long> {
     
     // Rechercher par ville
-    List<PointRelais> findByVille(String ville);
+    @Query("SELECT p FROM PointRelais p WHERE p.adresse.ville = :ville")
+    List<PointRelais> findByVille(@Param("ville") String ville);
     
     // Rechercher par code postal
-    List<PointRelais> findByCodePostal(String codePostal);
+    @Query("SELECT p FROM PointRelais p WHERE p.adresse.codePostal = :codePostal")
+    List<PointRelais> findByCodePostal(@Param("codePostal") String codePostal);
     
     // Rechercher les points relais avec de la capacité disponible
-    @Query("SELECT p FROM PointRelais p WHERE p.capaciteActuelle < p.capaciteMaximale")
+    @Query("SELECT p FROM PointRelais p WHERE p.stockActuel < p.capaciteMaximale")
     List<PointRelais> findAvailablePointsRelais();
     
     // Rechercher les points relais dans un rayon donné (en km) autour d'un point
@@ -38,5 +40,9 @@ public interface PointRelaisRepository extends JpaRepository<PointRelais, Long> 
     // Rechercher par propriétaire
     List<PointRelais> findByProprietaireId(Long proprietaireId);
 
-    List<PointRelais> findByVilleAndCodePostal(String ville, String codePostal);
+    // Rechercher par ville et code postal
+    @Query("SELECT p FROM PointRelais p WHERE p.adresse.ville = :ville AND p.adresse.codePostal = :codePostal")
+    List<PointRelais> findByVilleAndCodePostal(
+        @Param("ville") String ville,
+        @Param("codePostal") String codePostal);
 } 
