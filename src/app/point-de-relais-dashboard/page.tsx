@@ -3,14 +3,14 @@ import { DashboardHeader } from '@/app/point-de-relais-dashboard/components/dash
 import DashboardOverview from '@/app/point-de-relais-dashboard/components/dashboard/dashboard-overview';
 
 export const metadata: Metadata = {
-    title: 'Dashboard | Point Relais',
-    description: 'Tableau de bord du point relais de stockage',
+  title: 'Dashboard | Point Relais',
+  description: 'Tableau de bord du point relais de stockage',
 };
 export default function PointDeRelaisDashboardPage() {
-    return (
-        <div className="flex flex-col gap-4 p-4 md:p-8 w-full ">
-            <DashboardHeader />
-            <DashboardOverview />
-        </div>
-    );
+  return (
+    <div className="flex flex-col gap-4 p-2 sm:p-4 md:p-6 ">
+      <DashboardHeader />
+      <DashboardOverview />
+    </div>
+  );
 }

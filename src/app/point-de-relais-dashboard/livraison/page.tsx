@@ -1,11 +1,30 @@
-import { DashboardHeader } from '@/app/point-de-relais-dashboard/components/dashboard/dashboard-header';
-import { PackageLivraison } from '@/app/point-de-relais-dashboard/components/dashboard/package-delivery';
+/**
+ * Page de livraison des colis
+ *
+ * Cette page affiche:
+ * - L'en-tête avec le titre "Livraison des Colis"
+ * - Le composant de livraison des colis
+ */
+import type { Metadata } from 'next';
+import { DashboardHeader } from '../components/dashboard/dashboard-header';
+import { PackageDelivery } from '../components/dashboard/package-delivery';
 
+/**
+ * Métadonnées de la page pour le SEO
+ */
+export const metadata: Metadata = {
+  title: 'Livraison des Colis | Point Relais',
+  description: 'Interface de livraison des colis',
+};
+
+/**
+ * Page de livraison des colis
+ */
 export default function LivraisonPage() {
-    return (
-        <div className="flex flex-col gap-4 p-4 mx-4 md:p-8 w-screen">
-            <DashboardHeader />
-            <PackageLivraison />
-        </div>
-    );
+  return (
+    <div className="flex flex-col gap-4 p-4 md:p-8">
+      <DashboardHeader title="Livraison des Colis" />
+      <PackageDelivery />
+    </div>
+  );
 }
