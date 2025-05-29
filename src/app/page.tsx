@@ -10,8 +10,9 @@ import Footer from "@/components/home/Footer";
 
 export default function Home() {
   return (
+    <div className="top-0 w-full" >
+    <Navbar />
     <div className="min-h-screen flex flex-col font-[family-name:var(--font-geist-sans)]">
-      <Navbar />
       
       <main className="flex-grow">
         {/* Bannière principale */}
@@ -117,6 +118,7 @@ export default function Home() {
       </main>
       
       <Footer />
+    </div>
     </div>
   );
 };

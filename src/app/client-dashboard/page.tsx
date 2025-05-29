@@ -1,34 +1,29 @@
 'use client';
 import Footer from '@/components/home/Footer';
 import Navbar from '@/components/home/Navbar';
-import React, { useState, useEffect, useRef } from 'react';
-import { 
-  FiPlus, FiEdit2, FiTrash2, FiPackage, FiUser, FiMap, 
-  FiBarChart2, FiStar, FiDollarSign, FiMapPin, FiSave,
-  FiUpload, FiX, FiCheck, FiPhone, FiMail, FiHome,
-  FiEdit,
-  FiCamera
+import React, { useState } from 'react';
+import {
+  FiUser, 
+  FiMapPin, 
+  FiPackage, 
+  FiHome,
+  FiSettings,
+  FiMenu,
+  FiX,
+  FiTrendingUp,
+  FiClock,
+  FiCheckCircle,
+  FiAlertCircle,
+  FiArrowRight,
+  FiStar,
+  FiShield,
+  FiZap
 } from 'react-icons/fi';
+import Profil from './Profil';
+import Grelais from './grelais';
+import Colis from './VueColis';
 
 // Types
-interface PointRelais {
-  id: string;
-  nom: string;
-  photo: string;
-  localisation: string;
-  quartier: string;
-  description: string;
-  type: 'Bureau' | 'Commerce' | 'Agence';
-  contact: string;
-  nomProprietaire: string;
-  nombreColis: number;
-  pourcentageVente: number;
-  retourUtilisateurs: number; // Sur 5
-  gainsPourvus: number;
-  tauxPopularite: number; // Pourcentage
-  recent?: boolean;
-}
-
 interface Utilisateur {
   id: string;
   nom: string;
@@ -39,763 +34,339 @@ interface Utilisateur {
   photo?: string;
 }
 
+type PageActive = 'accueil' | 'colis' | 'grelais' | 'profil';
+
 const Dashboard: React.FC = () => {
   const [utilisateur, setUtilisateur] = useState<Utilisateur>({
     id: '1',
-    nom: 'Dupont',
-    prenom: 'Marie',
+    nom: 'NGUETCHO',
+    prenom: 'Gabrielle Chloé',
     email: 'marie.dupont@example.com',
     telephone: '+237 6 12 34 56 78',
     adresse: '123 Rue de Yaoundé, Douala',
     photo: '/images/default-user.jpg'
   });
+  
+  const [pageActive, setPageActive] = useState<PageActive>('accueil');
+  const [sidebarOuverte, setSidebarOuverte] = useState(false);
 
-  const [pointsRelais, setPointsRelais] = useState<PointRelais[]>([
+  const handleUpdateUtilisateur = (utilisateurMisAJour: Utilisateur) => {
+    setUtilisateur(utilisateurMisAJour);
+  };
+
+  const menuItems = [
+    { id: 'accueil', label: 'Accueil', icon: FiHome },
+    { id: 'colis', label: 'Mes Colis', icon: FiPackage },
+    { id: 'grelais', label: 'Points Relais', icon: FiMapPin },
+    { id: 'profil', label: 'Mon Profil', icon: FiUser }
+  ];
+
+  const statsData = [
+    { 
+      label: 'Colis actifs', 
+      value: '12', 
+      icon: FiPackage, 
+      color: 'blue',
+      trend: '+2 cette semaine' 
+    },
+    { 
+      label: 'Livraisons', 
+      value: '47', 
+      icon: FiCheckCircle, 
+      color: 'green',
+      trend: '+15% ce mois' 
+    },
+    { 
+      label: 'Points relais', 
+      value: '8', 
+      icon: FiMapPin, 
+      color: 'purple',
+      trend: 'Disponibles' 
+    }
+  ];
+
+  const recentActivities = [
     {
-      id: '1',
-      nom: 'Point Relais Central',
-      photo: '/images/point-relais-1.jpg',
-      localisation: '15 Avenue Kennedy, Douala',
-      quartier: 'Akwa',
-      description: 'Point relais situé en plein centre-ville, facilement accessible',
-      type: 'Commerce',
-      contact: '+237 6 23 45 67 89',
-      nomProprietaire: 'Dupont Marie',
-      nombreColis: 156,
-      pourcentageVente: 87,
-      retourUtilisateurs: 4.7,
-      gainsPourvus: 324050,
-      tauxPopularite: 92
+      id: 1,
+      type: 'livraison',
+      title: 'Colis livré avec succès',
+      description: 'Votre colis #COL-2024-001 a été livré',
+      time: 'Il y a 2 heures',
+      status: 'success'
     },
     {
-      id: '2',
-      nom: 'Agence Express',
-      photo: '/images/point-relais-2.jpg',
-      localisation: '42 Boulevard de la Liberté, Yaoundé',
-      quartier: 'Centre',
-      description: 'Agence spécialisée dans la livraison express de colis',
-      type: 'Agence',
-      contact: '+237 6 98 76 54 32',
-      nomProprietaire: 'Dupont Marie',
-      nombreColis: 98,
-      pourcentageVente: 73,
-      retourUtilisateurs: 4.2,
-      gainsPourvus: 187025,
-      tauxPopularite: 78
+      id: 2,
+      type: 'transit',
+      title: 'Colis en transit',
+      description: 'Votre colis #COL-2024-002 est en cours de livraison',
+      time: 'Il y a 4 heures',
+      status: 'pending'
+    },
+    {
+      id: 3,
+      type: 'nouveau',
+      title: 'Nouveau colis enregistré',
+      description: 'Colis #COL-2024-003 ajouté à votre compte',
+      time: 'Hier',
+      status: 'info'
     }
-  ]);
+  ];
 
+  const renderContenu = () => {
+    switch (pageActive) {
+      case 'colis':
+        return <Colis utilisateur={utilisateur} />;
+      case 'grelais':
+        return <Grelais utilisateur={utilisateur} />;
+      case 'profil':
+        return (
+          <Profil 
+            utilisateur={utilisateur}
+            onUpdateUtilisateur={handleUpdateUtilisateur}
+          />
+        );
+      case 'accueil':
+      default:
+        return (
+          <div className="flex-1 p-6 bg-gray-50 min-h-screen">
+            <div className="max-w-7xl mx-auto space-y-8">
+              {/* Header d'accueil */}
+              <div className="fixed bg-white/80 backdrop-blur-sm rounded-3xl shadow-xl border border-white/20 p-8 relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-r from-green-600/5 to-blue-600/5"></div>
+                <div className="relative flex items-center justify-between">
+                  <div className="flex items-center">
+                    <div className="bg-gradient-to-r from-green-700 to-teal-800 p-4 rounded-2xl mr-6 shadow-lg">
+                      <FiHome className="text-2xl text-white" />
+                    </div>
+                    <div>
+                      <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
+                        Bienvenue, {utilisateur.prenom} !
+                      </h1>
+                      <p className="text-gray-600 mt-2 text-lg">
+                        Gérez vos colis et points relais en toute simplicité
+                      </p>
+                    </div>
+                  </div>
+                  <div className="hidden md:flex items-center space-x-3">
+                    <div className="bg-green-100 text-green-700 px-4 py-2 rounded-full text-sm font-medium flex items-center">
+                      <FiShield className="mr-2" />
+                      Compte vérifié
+                    </div>
+                    <div className="bg-blue-100 text-blue-700 px-4 py-2 rounded-full text-sm font-medium flex items-center">
+                      <FiStar className="mr-2" />
+                      Membre Premium
+                    </div>
+                  </div>
+                </div>
+              </div>
 
-  const [selectedPointRelais, setSelectedPointRelais] = useState<PointRelais | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [isCreateMode, setIsCreateMode] = useState(false);
-  const [newPointRelais, setNewPointRelais] = useState<Partial<PointRelais>>({
-    type: 'Commerce'
-  });
-  
-  const [editingProfile, setEditingProfile] = useState(false);
-  const [updatedUtilisateur, setUpdatedUtilisateur] = useState<Utilisateur>(utilisateur);
-  
-  const userPhotoInputRef = useRef<HTMLInputElement>(null);
-  const pointRelaisPhotoInputRef = useRef<HTMLInputElement>(null);
-  
-  // Fonction pour géolocaliser l'utilisateur
-  const getUserLocation = () => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const coords = `${position.coords.latitude}, ${position.coords.longitude}`;
-          if (isCreateMode) {
-            setNewPointRelais({
-              ...newPointRelais,
-              localisation: coords
-            });
-          } else if (selectedPointRelais) {
-            setSelectedPointRelais({
-              ...selectedPointRelais,
-              localisation: coords
-            });
-          }
-        },
-        (error) => {
-          console.error("Erreur de géolocalisation:", error);
-          alert("Impossible d'obtenir votre position. Veuillez l'entrer manuellement.");
-        }
-      );
-    } else {
-      alert("La géolocalisation n'est pas supportée par votre navigateur.");
+              {/* Statistiques */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {statsData.map((stat, index) => (
+                  <div key={index} className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20 p-6 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className={`p-3 rounded-xl bg-${stat.color}-100`}>
+                        <stat.icon className={`text-xl text-${stat.color}-600`} />
+                      </div>
+                      <FiTrendingUp className="text-gray-400" />
+                    </div>
+                    <div>
+                      <h3 className="text-3xl font-bold text-gray-900 mb-1">{stat.value}</h3>
+                      <p className="text-gray-600 text-sm mb-2">{stat.label}</p>
+                      <p className={`text-xs text-${stat.color}-600 font-medium`}>{stat.trend}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Cartes de navigation rapide */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div 
+                  onClick={() => setPageActive('colis')}
+                  className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20 p-6 cursor-pointer hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 group relative overflow-hidden"
+                >
+                  <div className="absolute inset-0 bg-gradient-to-r from-blue-600/0 to-blue-600/5 group-hover:from-blue-600/5 group-hover:to-blue-600/10 transition-all duration-300"></div>
+                  <div className="relative">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="bg-blue-100 p-3 rounded-xl group-hover:bg-blue-200 transition-colors">
+                        <FiPackage className="text-xl text-blue-600" />
+                      </div>
+                      <FiArrowRight className="text-gray-400 group-hover:text-blue-600 group-hover:translate-x-1 transition-all" />
+                    </div>
+                    <h3 className="text-xl font-semibold text-gray-900 mb-2">Mes Colis</h3>
+                    <p className="text-gray-600 text-sm">Suivez vos expéditions en temps réel</p>
+                    <div className="mt-4 flex items-center text-blue-600 text-sm font-medium">
+                      <FiZap className="mr-1" />
+                      12 colis actifs
+                    </div>
+                  </div>
+                </div>
+
+                <div 
+                  onClick={() => setPageActive('grelais')}
+                  className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20 p-6 cursor-pointer hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 group relative overflow-hidden"
+                >
+                  <div className="absolute inset-0 bg-gradient-to-r from-purple-600/0 to-purple-600/5 group-hover:from-purple-600/5 group-hover:to-purple-600/10 transition-all duration-300"></div>
+                  <div className="relative">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="bg-purple-100 p-3 rounded-xl group-hover:bg-purple-200 transition-colors">
+                        <FiMapPin className="text-xl text-purple-600" />
+                      </div>
+                      <FiArrowRight className="text-gray-400 group-hover:text-purple-600 group-hover:translate-x-1 transition-all" />
+                    </div>
+                    <h3 className="text-xl font-semibold text-gray-900 mb-2">Points Relais</h3>
+                    <p className="text-gray-600 text-sm">Trouvez le point relais le plus proche</p>
+                    <div className="mt-4 flex items-center text-purple-600 text-sm font-medium">
+                      <FiMapPin className="mr-1" />
+                      8 points disponibles
+                    </div>
+                  </div>
+                </div>
+
+                <div 
+                  onClick={() => setPageActive('profil')}
+                  className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20 p-6 cursor-pointer hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 group relative overflow-hidden"
+                >
+                  <div className="absolute inset-0 bg-gradient-to-r from-green-600/0 to-green-600/5 group-hover:from-green-600/5 group-hover:to-green-600/10 transition-all duration-300"></div>
+                  <div className="relative">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="bg-green-100 p-3 rounded-xl group-hover:bg-green-200 transition-colors">
+                        <FiUser className="text-xl text-green-600" />
+                      </div>
+                      <FiArrowRight className="text-gray-400 group-hover:text-green-600 group-hover:translate-x-1 transition-all" />
+                    </div>
+                    <h3 className="text-xl font-semibold text-gray-900 mb-2">Mon Profil</h3>
+                    <p className="text-gray-600 text-sm">Gérez vos informations personnelles</p>
+                    <div className="mt-4 flex items-center text-green-600 text-sm font-medium">
+                      <FiShield className="mr-1" />
+                      Profil vérifié
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Activités récentes */}
+              <div className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-xl border border-white/20 p-8">
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-2xl font-bold text-gray-900 flex items-center">
+                    <FiClock className="mr-3 text-gray-600" />
+                    Activités récentes
+                  </h2>
+                  <button className="text-blue-600 hover:text-blue-700 font-medium text-sm flex items-center transition-colors">
+                    Voir tout
+                    <FiArrowRight className="ml-1" />
+                  </button>
+                </div>
+                <div className="space-y-4">
+                  {recentActivities.map((activity) => (
+                    <div key={activity.id} className="flex items-center p-4 bg-gray-50/50 rounded-xl border border-gray-100/50 hover:bg-gray-100/50 transition-colors">
+                      <div className={`p-2 rounded-lg mr-4 ${
+                        activity.status === 'success' ? 'bg-green-100 text-green-600' :
+                        activity.status === 'pending' ? 'bg-yellow-100 text-yellow-600' :
+                        'bg-blue-100 text-blue-600'
+                      }`}>
+                        {activity.status === 'success' ? <FiCheckCircle /> :
+                         activity.status === 'pending' ? <FiClock /> :
+                         <FiAlertCircle />}
+                      </div>
+                      <div className="flex-1">
+                        <h4 className="font-semibold text-gray-900">{activity.title}</h4>
+                        <p className="text-gray-600 text-sm">{activity.description}</p>
+                      </div>
+                      <span className="text-gray-400 text-sm">{activity.time}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        );
     }
   };
-
-
-  
-  // Gestion des modaux
-  const openModal = (pointRelais: PointRelais) => {
-    setSelectedPointRelais(pointRelais);
-    setIsCreateMode(false);
-    setIsModalOpen(true);
-  };
-
-  const openCreateModal = () => {
-    setSelectedPointRelais(null);
-    setIsCreateMode(true);
-    setNewPointRelais({
-      type: 'Commerce',
-      nomProprietaire: `${utilisateur.nom} ${utilisateur.prenom}`
-    });
-    setIsModalOpen(true);
-  };
-
-  const closeModal = () => {
-    setIsModalOpen(false);
-    setSelectedPointRelais(null);
-  };
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    
-    if (isCreateMode) {
-      setNewPointRelais({
-        ...newPointRelais,
-        [name]: value
-      });
-    } else if (selectedPointRelais) {
-      setSelectedPointRelais({
-        ...selectedPointRelais,
-        [name]: value
-      });
-    }
-  };
-
-  const handleProfileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setUpdatedUtilisateur({
-      ...updatedUtilisateur,
-      [name]: value
-    });
-  };
-
-  // Gestion des photos
-  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>, isUserPhoto: boolean = false) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      const reader = new FileReader();
-      
-      reader.onload = (event) => {
-        if (event.target && event.target.result) {
-          const photoUrl = event.target.result.toString();
-          
-          if (isUserPhoto) {
-            setUpdatedUtilisateur({ ...updatedUtilisateur, photo: photoUrl });
-          } else if (isCreateMode) {
-            setNewPointRelais({ ...newPointRelais, photo: photoUrl });
-          } else if (selectedPointRelais) {
-            setSelectedPointRelais({ ...selectedPointRelais, photo: photoUrl });
-          }
-        }
-      };
-      
-      reader.readAsDataURL(file);
-    }
-  };
-
-  // Sauvegarder les modifications
-  const handleSave = () => {
-    if (selectedPointRelais) {
-      setPointsRelais(pointsRelais.map(point => 
-        point.id === selectedPointRelais.id ? selectedPointRelais : point
-      ));
-      closeModal();
-    }
-  };
-
-  const handleCreate = () => {
-    const newPoint: PointRelais = {
-      id: Date.now().toString(),
-      nom: newPointRelais.nom || '',
-      photo: newPointRelais.photo || '/images/default-point-relais.jpg',
-      localisation: newPointRelais.localisation || '',
-      quartier: newPointRelais.quartier || '',
-      description: newPointRelais.description || '',
-      type: newPointRelais.type as 'Bureau' | 'Commerce' | 'Agence',
-      contact: newPointRelais.contact || '',
-      nomProprietaire: newPointRelais.nomProprietaire || `${utilisateur.nom} ${utilisateur.prenom}`,
-      nombreColis: 0,
-      pourcentageVente: 0,
-      retourUtilisateurs: 0,
-      gainsPourvus: 0,
-      tauxPopularite: 0,
-      recent: true
-    };
-    
-    setPointsRelais([...pointsRelais, newPoint]);
-    closeModal();
-  };
-
-  const handleDelete = (id: string) => {
-    setPointsRelais(pointsRelais.filter(point => point.id !== id));
-  };
-
-  const saveProfileChanges = () => {
-    setUtilisateur(updatedUtilisateur);
-    setEditingProfile(false);
-  };
-
-  const cancelProfileEdit = () => {
-    setUpdatedUtilisateur(utilisateur);
-    setEditingProfile(false);
-  };
-
 
   return (
-    <div className="min-h-screen bg-white flex flex-col">
-      {/* Header */}
-      <header className="bg-green-600 text-white shadow-md">
+    <div className="min-h-screen bg-gray-50">
       <Navbar />
-        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-          <div className="flex items-center">
-            <FiMapPin className="text-2xl mr-2" />
-            <h1 className="text-xl font-bold">EasyRelais Dashboard</h1>
-          </div>
-          <div className="flex items-center">
-            <span className="mr-2">{utilisateur.prenom} {utilisateur.nom}</span>
-            <div className="bg-green-700 rounded-full h-8 w-8 flex items-center justify-center overflow-hidden">
-              {utilisateur.photo ? (
-                <div className="h-full w-full bg-center bg-cover" style={{ backgroundImage: `url(${utilisateur.photo})` }} />
-              ) : (
-                <FiUser className="text-white" />
-              )}
-            </div>
-          </div>
-        </div>
-      </header>
-
-      {/* Main Content */}
-      <main className="flex flex-1 container mx-auto">
-        {/* Sidebar - Profile Section */}
-        <aside className="w-64 text-black bg-white shadow-md rounded-lg overflow-hidden">
-            {/* En-tête avec photo */}
-            <div className="bg-gradient-to-r from-green-500 to-green-700 p-6 flex flex-col items-center relative">
-                <h2 className="text-xl font-semibold text-white mb-4 text-center">Mon profil</h2>
-                
-                {!editingProfile ? (
-                <div className="mb-2">
-                    <div className="h-24 w-24 rounded-full overflow-hidden bg-white shadow-lg border-4 border-white">
-                    {utilisateur.photo ? (
-                        <div className="h-full w-full bg-center bg-cover" style={{ backgroundImage: `url(${utilisateur.photo})` }} />
-                    ) : (
-                        <div className="h-full w-full flex items-center justify-center bg-green-100">
-                        <FiUser className="text-3xl text-green-700" />
-                        </div>
-                    )}
-                    </div>
-                    <p className="text-white font-medium text-center mt-2">
-                    {utilisateur.prenom} {utilisateur.nom}
-                    </p>
-                </div>
-                ) : (
-                <div className="mb-2">
-                    <div className="h-24 w-24 rounded-full overflow-hidden bg-white shadow-lg border-4 border-white relative">
-                    {updatedUtilisateur.photo ? (
-                        <div className="h-full w-full bg-center bg-cover" style={{ backgroundImage: `url(${updatedUtilisateur.photo})` }} />
-                    ) : (
-                        <div className="h-full w-full flex items-center justify-center bg-green-100">
-                        <FiUser className="text-3xl text-green-700" />
-                        </div>
-                    )}
-                    <div 
-                        className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity cursor-pointer"
-                        onClick={() => userPhotoInputRef.current?.click()}
-                    >
-                        <FiCamera className="text-white text-2xl" />
-                    </div>
-                    </div>
-                    <input 
-                    type="file" 
-                    ref={userPhotoInputRef} 
-                    className="hidden" 
-                    accept="image/*"
-                    onChange={(e) => handlePhotoUpload(e, true)} 
-                    />
-                    <button 
-                    className="text-sm text-white hover:text-green-100 flex items-center justify-center mt-2"
-                    onClick={() => userPhotoInputRef.current?.click()}
-                    >
-                    <FiEdit className="mr-1" /> Modifier photo
-                    </button>
-                </div>
-                )}
-            </div>
-            
-            {/* Contenu du profil */}
-            <div className="p-5">
-                {!editingProfile ? (
-                <>
-                    <div className="space-y-4">
-                    <div className="border-b border-gray-100 pb-2">
-                        <div className="flex items-center mb-1">
-                        <div className="h-8 w-8 rounded-full bg-green-100 flex items-center justify-center mr-3">
-                            <FiMail className="text-green-600" />
-                        </div>
-                        <div>
-                            <span className="text-xs text-gray-500">Email</span>
-                            <p className="font-medium text-sm">{utilisateur.email}</p>
-                        </div>
-                        </div>
-                    </div>
-                    
-                    <div className="border-b border-gray-100 pb-2">
-                        <div className="flex items-center mb-1">
-                        <div className="h-8 w-8 rounded-full bg-green-100 flex items-center justify-center mr-3">
-                            <FiPhone className="text-green-600" />
-                        </div>
-                        <div>
-                            <span className="text-xs text-gray-500">Téléphone</span>
-                            <p className="font-medium text-sm">{utilisateur.telephone}</p>
-                        </div>
-                        </div>
-                    </div>
-                    
-                    <div>
-                        <div className="flex items-center mb-1">
-                        <div className="h-8 w-8 rounded-full bg-green-100 flex items-center justify-center mr-3">
-                            <FiHome className="text-green-600" />
-                        </div>
-                        <div>
-                            <span className="text-xs text-gray-500">Adresse</span>
-                            <p className="font-medium text-sm">{utilisateur.adresse}</p>
-                        </div>
-                        </div>
-                    </div>
-                    </div>
-                    
-                    <button 
-                        className="mt-6 w-full bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md flex items-center justify-center transition-colors"
-                        onClick={() => setEditingProfile(true)}
-                    >
-                        <FiEdit2 className="mr-2" /> Modifier mon profil
-                    </button>
-                </>
-                ) : (
-                <>
-                    <div className="space-y-3">
-                    <div>
-                        <label className="block text-xs text-gray-600 mb-1 font-medium">Prénom</label>
-                        <input
-                        type="text"
-                        name="prenom"
-                        className="w-full p-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500 text-sm"
-                        value={updatedUtilisateur.prenom}
-                        onChange={handleProfileInputChange}
-                        />
-                    </div>
-                    
-                    <div>
-                        <label className="block text-xs text-gray-600 mb-1 font-medium">Nom</label>
-                        <input
-                        type="text"
-                        name="nom"
-                        className="w-full p-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500 text-sm"
-                        value={updatedUtilisateur.nom}
-                        onChange={handleProfileInputChange}
-                        />
-                    </div>
-                    
-                    <div>
-                        <label className="block text-xs text-gray-600 mb-1 font-medium">Email</label>
-                        <input
-                        type="email"
-                        name="email"
-                        className="w-full p-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500 text-sm"
-                        value={updatedUtilisateur.email}
-                        onChange={handleProfileInputChange}
-                        />
-                    </div>
-                    
-                    <div>
-                        <label className="block text-xs text-gray-600 mb-1 font-medium">Téléphone</label>
-                        <input
-                        type="tel"
-                        name="telephone"
-                        className="w-full p-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500 text-sm"
-                        value={updatedUtilisateur.telephone}
-                        onChange={handleProfileInputChange}
-                        />
-                    </div>
-                    
-                    <div>
-                        <label className="block text-xs text-gray-600 mb-1 font-medium">Adresse</label>
-                        <input
-                        type="text"
-                        name="adresse"
-                        className="w-full p-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500 text-sm"
-                        value={updatedUtilisateur.adresse}
-                        onChange={handleProfileInputChange}
-                        />
-                    </div>
-                    </div>
-                    
-                    <div className="mt-6 flex space-x-2">
-                    <button 
-                        className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-2 rounded-md flex items-center justify-center transition-colors text-sm"
-                        onClick={cancelProfileEdit}
-                    >
-                        <FiX className="mr-1" /> Annuler
-                    </button>
-                    <button 
-                        className="flex-1 bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-md flex items-center justify-center transition-colors text-sm"
-                        onClick={saveProfileChanges}
-                    >
-                        <FiSave className="mr-1" /> Enregistrer
-                    </button>
-                    </div>
-                </>
-                )}
-            </div>
-        </aside>
-
-        {/* Points Relais Section */}
-        <section className="flex-1 p-6 text-black">
-        <div className="flex justify-between items-center mb-6">
-            <h2 className="text-xl font-semibold text-green-700">Mes Points Relais</h2>
-            <button 
-            className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md flex items-center transition-colors"
-            onClick={openCreateModal}
+      
+      <div className="flex">
+        {/* Sidebar */}
+        <div className={`fixed sticky inset-y-0 left-0 z-50 w-80 bg-white/95 backdrop-blur-sm shadow-2xl transform transition-transform duration-300 ease-in-out ${sidebarOuverte ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 lg:static lg:inset-0`}>
+          <div className="flex items-center justify-between p-6 border-b border-gray-100">
+            <h2 className="text-2xl font-bold bg-teal-800 bg-clip-text text-transparent">
+              Mon espace de Travail
+            </h2>
+            <button
+              onClick={() => setSidebarOuverte(false)}
+              className="lg:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors"
             >
-            <FiPlus className="mr-2" /> Créer un Point Relais
+              <FiX className="text-gray-600" />
             </button>
-        </div>
-
-        {pointsRelais.length === 0 ? (
-            <div className="text-center py-10 text-gray-500">
-            <FiMapPin className="mx-auto text-4xl mb-2" />
-            <p>Vous n'avez pas encore de points relais</p>
-            </div>
-        ) : (
-            <div className="space-y-3">
-            {pointsRelais.map(point => (
-                <div key={point.id} className="bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow relative p-3">
-                {point.recent && (
-                    <span className="absolute -top-2 -right-2 bg-green-500 text-white text-xs px-2 py-1 rounded-full">
-                    Nouveau
-                    </span>
-                )}
-                <div className="flex items-center">
-                    {/* Photo circulaire */}
-                    <div className="h-16 w-16 rounded-full bg-gray-200 flex-shrink-0 overflow-hidden relative mr-4 border-2 border-green-100">
-                    {point.photo && point.photo.startsWith('data:') ? (
-                        <div className="h-full w-full bg-center bg-cover" style={{ backgroundImage: `url(${point.photo})` }} />
-                    ) : (
-                        <div className="absolute inset-0 flex items-center justify-center text-gray-400">
-                        <FiMapPin className="text-2xl" />
-                        </div>
-                    )}
-                    </div>
-                    
-                    {/* Informations principales */}
-                    <div className="flex-1 min-w-0">
-                    <div className="flex flex-wrap justify-between items-center mb-1">
-                        <div className="flex items-center mr-2">
-                        <h3 className="font-semibold text-base truncate">{point.nom}</h3>
-                        <span className="ml-2 bg-green-100 text-green-800 text-xs px-2 py-0.5 rounded">
-                            {point.type}
-                        </span>
-                        </div>
-                        <span className="text-xs text-gray-500">{point.quartier}</span>
-                    </div>
-                    
-                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm mb-1">
-                        <div className="flex items-center text-gray-600">
-                        <FiMapPin className="mr-1 text-xs" />
-                        <span className="text-xs truncate">{point.localisation}</span>
-                        </div>
-                        <div className="flex items-center text-gray-600">
-                        <FiPhone className="mr-1 text-xs" />
-                        <span className="text-xs">{point.contact}</span>
-                        </div>
-                    </div>
-                    
-                    {/* Stats en inline */}
-                    <div className="flex flex-wrap gap-4 mt-2">
-                        <div className="flex items-center">
-                        <FiPackage className="mr-1 text-green-600 text-xs" />
-                        <span className="text-xs font-medium">{point.nombreColis} colis</span>
-                        </div>
-                        <div className="flex items-center">
-                        <FiBarChart2 className="mr-1 text-green-600 text-xs" />
-                        <span className="text-xs font-medium">{point.pourcentageVente}% ventes</span>
-                        </div>
-                        <div className="flex items-center">
-                        <FiStar className="mr-1 text-yellow-500 text-xs" />
-                        <span className="text-xs font-medium">{point.retourUtilisateurs.toFixed(1)}/5</span>
-                        </div>
-                        <div className="flex items-center">
-                        <FiDollarSign className="mr-1 text-green-600 text-xs" />
-                        <span className="text-xs font-medium">{point.gainsPourvus.toLocaleString()} FCFA</span>
-                        </div>
-                    </div>
-                    </div>
-                    
-                    {/* Actions */}
-                    <div className="flex flex-shrink-0 ml-4 space-x-2">
-                    <button 
-                        className="text-green-600 hover:text-green-800 p-1.5 rounded-full hover:bg-green-50"
-                        onClick={() => openModal(point)}
-                    >
-                        <FiEdit2 className="text-lg" />
-                    </button>
-                    <button 
-                        className="text-red-600 hover:text-red-800 p-1.5 rounded-full hover:bg-red-50"
-                        onClick={() => handleDelete(point.id)}
-                    >
-                        <FiTrash2 className="text-lg" />
-                    </button>
-                    </div>
-                </div>
-                </div>
+          </div>
+          
+          <nav className="mt-6 px-4">
+            {menuItems.map((item) => (
+              <button
+                key={item.id}
+                onClick={() => {
+                  setPageActive(item.id as PageActive);
+                  setSidebarOuverte(false);
+                }}
+                className={`w-full flex items-center px-4 py-3 mb-2 rounded-xl text-left transition-all duration-200 ${
+                  pageActive === item.id 
+                    ? 'bg-teal-700 text-white shadow-lg transform scale-105' 
+                    : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
+                }`}
+              >
+                <item.icon className="mr-3 text-lg" />
+                <span className="font-medium">{item.label}</span>
+              </button>
             ))}
-            </div>
-        )}
-        </section>
-      </main>
+          </nav>
 
-      {/* Modal */}
-      {isModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-xl w-full max-w-3xl max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
-              <h2 className="text-xl font-semibold text-green-700 mb-4">
-                {isCreateMode ? "Créer un nouveau Point Relais" : "Modifier le Point Relais"}
-              </h2>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Nom</label>
-                  <input
-                    type="text"
-                    name="nom"
-                    className="w-full p-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
-                    value={isCreateMode ? newPointRelais.nom || '' : selectedPointRelais?.nom || ''}
-                    onChange={handleInputChange}
-                  />
+          {/* Profile section in sidebar */}
+          <div className="absolute bottom-6 left-4 right-4">
+            <div className="bg-gradient-to-r from-green-50 to-blue-50 rounded-xl p-4 border border-green-100">
+              <div className="flex items-center">
+                <div className="w-10 h-10 bg-gradient-to-r from-green-500 to-blue-500 rounded-full flex items-center justify-center text-white font-semibold">
+                  {utilisateur.prenom.charAt(0)}
                 </div>
-                
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Photo</label>
-                  <div className="flex items-center space-x-4">
-                    <div className="w-24 h-24 bg-gray-200 rounded-lg relative overflow-hidden">
-                      {(isCreateMode ? newPointRelais.photo : selectedPointRelais?.photo) ? (
-                        <div 
-                          className="h-full w-full bg-center bg-cover" 
-                          style={{ 
-                            backgroundImage: `url(${isCreateMode ? newPointRelais.photo : selectedPointRelais?.photo})` 
-                          }} 
-                        />
-                      ) : (
-                        <div className="flex items-center justify-center h-full w-full">
-                          <FiMapPin className="text-2xl text-gray-400" />
-                        </div>
-                      )}
-                    </div>
-                    <button
-                      type="button"
-                      className="px-4 py-2 border border-gray-300 rounded-md bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
-                      onClick={() => pointRelaisPhotoInputRef.current?.click()}
-                    >
-                      <FiUpload className="inline-block mr-2" />
-                      Charger une photo
-                    </button>
-                    <input
-                      type="file"
-                      ref={pointRelaisPhotoInputRef}
-                      className="hidden"
-                      accept="image/*"
-                      onChange={(e) => handlePhotoUpload(e)}
-                    />
-                  </div>
+                <div className="ml-3 flex-1 min-w-0">
+                  <p className="text-sm font-medium text-gray-900 truncate">
+                    {utilisateur.prenom} {utilisateur.nom}
+                  </p>
+                  <p className="text-xs text-gray-500 truncate">{utilisateur.email}</p>
                 </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Localisation</label>
-                  <div className="flex">
-                    <input
-                      type="text"
-                      name="localisation"
-                      className="flex-1 p-2 border border-gray-300 rounded-l-md focus:ring-green-500 focus:border-green-500"
-                      value={isCreateMode ? newPointRelais.localisation || '' : selectedPointRelais?.localisation || ''}
-                      onChange={handleInputChange}
-                    />
-                    <button
-                      type="button"
-                      className="px-3 py-2 bg-green-600 text-white rounded-r-md hover:bg-green-700 transition-colors"
-                      onClick={getUserLocation}
-                    >
-                      <FiMapPin />
-                    </button>
-                  </div>
-                  <p className="text-xs text-gray-500 mt-1">Cliquez sur l'icône pour utiliser votre position actuelle</p>
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Quartier</label>
-                  <input
-                    type="text"
-                    name="quartier"
-                    className="w-full p-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
-                    value={isCreateMode ? newPointRelais.quartier || '' : selectedPointRelais?.quartier || ''}
-                    onChange={handleInputChange}
-                  />
-                </div>
-                
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-                  <textarea
-                    name="description"
-                    rows={3}
-                    className="w-full p-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
-                    value={isCreateMode ? newPointRelais.description || '' : selectedPointRelais?.description || ''}
-                    onChange={handleInputChange}
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Type</label>
-                  <select
-                    name="type"
-                    className="w-full p-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
-                    value={isCreateMode ? newPointRelais.type || 'Commerce' : selectedPointRelais?.type || 'Commerce'}
-                    onChange={handleInputChange}
-                  >
-                    <option value="Bureau">Bureau</option>
-                    <option value="Commerce">Commerce</option>
-                    <option value="Agence">Agence</option>
-                  </select>
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Contact</label>
-                  <input
-                    type="text"
-                    name="contact"
-                    className="w-full p-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
-                    value={isCreateMode ? newPointRelais.contact || '' : selectedPointRelais?.contact || ''}
-                    onChange={handleInputChange}
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Nom Propriétaire</label>
-                  <input
-                    type="text"
-                    name="nomProprietaire"
-                    className="w-full p-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
-                    value={isCreateMode ? newPointRelais.nomProprietaire || '' : selectedPointRelais?.nomProprietaire || ''}
-                    onChange={handleInputChange}
-                  />
-                </div>
-                
-                {!isCreateMode && (
-                <div className="md:col-span-2 pt-4 border-t mt-4">
-                  <h3 className="text-sm font-medium text-gray-700 mb-3">Statistiques</h3>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                    <div>
-                      <label className="block text-xs text-gray-500 mb-1">Nombre de colis</label>
-                      <input
-                        type="number"
-                        name="nombreColis"
-                        className="w-full p-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
-                        value={selectedPointRelais?.nombreColis || 0}
-                        onChange={handleInputChange}
-                      />
-                    </div>
-                    
-                    <div>
-                      <label className="block text-xs text-gray-500 mb-1">Pourcentage de vente (%)</label>
-                      <input
-                        type="number"
-                        name="pourcentageVente"
-                        className="w-full p-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
-                        min="0"
-                        max="100"
-                        value={selectedPointRelais?.pourcentageVente || 0}
-                        onChange={handleInputChange}
-                      />
-                    </div>
-                    
-                    <div>
-                      <label className="block text-xs text-gray-500 mb-1">Retour utilisateurs (sur 5)</label>
-                      <input
-                        type="number"
-                        name="retourUtilisateurs"
-                        className="w-full p-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
-                        min="0"
-                        max="5"
-                        step="0.1"
-                        value={selectedPointRelais?.retourUtilisateurs || 0}
-                        onChange={handleInputChange}
-                      />
-                    </div>
-                    
-                    <div>
-                      <label className="block text-xs text-gray-500 mb-1">Gains pourvus (FCFA)</label>
-                      <input
-                        type="number"
-                        name="gainsPourvus"
-                        className="w-full p-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
-                        value={selectedPointRelais?.gainsPourvus || 0}
-                        onChange={handleInputChange}
-                      />
-                    </div>
-                    
-                    <div>
-                      <label className="block text-xs text-gray-500 mb-1">Taux de popularité (%)</label>
-                      <input
-                        type="number"
-                        name="tauxPopularite"
-                        className="w-full p-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
-                        min="0"
-                        max="100"
-                        value={selectedPointRelais?.tauxPopularite || 0}
-                        onChange={handleInputChange}
-                      />
-                    </div>
-                  </div>
-                </div>
-                )}
-              </div>
-              
-              <div className="flex justify-end mt-6 space-x-3">
-                <button 
-                  className="px-4 py-2 border border-gray-300 rounded-md bg-white hover:bg-gray-50 text-gray-700"
-                  onClick={closeModal}
-                >
-                  Annuler
-                </button>
-                {isCreateMode ? (
-                  <button 
-                    className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-md transition-colors"
-                    onClick={handleCreate}
-                  >
-                    <FiPlus className="inline-block mr-2" />
-                    Créer
-                  </button>
-                ) : (
-                  <button 
-                    className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-md transition-colors"
-                    onClick={handleSave}
-                  >
-                    <FiSave className="inline-block mr-2" />
-                    Enregistrer
-                  </button>
-                )}
               </div>
             </div>
           </div>
         </div>
-      )}
 
-      {/* Footer */}
+        {/* Overlay pour mobile */}
+        {sidebarOuverte && (
+          <div 
+            className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
+            onClick={() => setSidebarOuverte(false)}
+          />
+        )}
+
+        {/* Contenu principal */}
+        <div className="flex-1 flex flex-col lg:ml-0">
+          {/* Header mobile */}
+          <div className="lg:hidden bg-white shadow-sm border-b border-gray-100 p-4 flex items-center justify-between">
+            <button
+              onClick={() => setSidebarOuverte(true)}
+              className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+            >
+              <FiMenu className="text-gray-600" />
+            </button>
+            <h1 className="font-semibold text-gray-900 capitalize">{pageActive}</h1>
+            <div className="w-8"></div>
+          </div>
+
+          {renderContenu()}
+        </div>
+      </div>
+      
       <Footer />
     </div>
   );

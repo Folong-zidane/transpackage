@@ -53,7 +53,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <SidebarProvider defaultOpen={window.innerWidth >= 1024}>
-      <div className="flex h-screen w-full overflow-hidden bg-background">
+      <div className="flex h-screen w-full overflow-hidden bg-background ">
         {/* Sidebar avec navigation */}
         <Sidebar
           variant="floating"
@@ -61,10 +61,9 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
           className="z-30 transition-all duration-300 ease-in-out"
         >
           {/* En-tête de la sidebar avec logo */}
-          <SidebarHeader className="flex items-center justify-between p-4">
-            <Link href="/dashboard" className="flex items-center gap-2 font-bold text-xl">
-              <Box className="h-6 w-6" />
-              <span>Point Relais</span>
+          <SidebarHeader className="flex items-center justify-between p-4 mt-8">
+            <Link href="/dashboard" className="flex items-center gap-2 font-bold text-xl text-green-600">
+              <span>Mon Point Relais</span>
             </Link>
           </SidebarHeader>
 

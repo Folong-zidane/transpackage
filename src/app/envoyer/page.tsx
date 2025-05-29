@@ -1,77 +1,90 @@
 'use client';
 import React, { useState, useEffect } from 'react';
-import { 
-  MinusCircleIcon, 
-  PlusCircleIcon, 
-  InformationCircleIcon, 
-  TruckIcon, 
-  MapPinIcon, 
-  UserIcon,
-  ShoppingBagIcon,
+import {
+  TruckIcon,
+  MapPinIcon,
   CreditCardIcon,
-  ArrowRightIcon
+  InformationCircleIcon, // Utilisé dans ShippingSteps
 } from '@heroicons/react/24/outline';
-import { ChatBubbleOvalLeftEllipsisIcon, CheckCircleIcon } from '@heroicons/react/24/solid';
+import { ChatBubbleOvalLeftEllipsisIcon, CheckCircleIcon as SolidCheckCircleIcon } from '@heroicons/react/24/solid'; // Renommé pour éviter conflit
 import Head from 'next/head';
-import Image from 'next/image';
 import Navbar from '@/components/home/Navbar';
-import { relayPointsData } from '../admin-dashboard/data/relaypoints';
+import PackageRegistration from './FomulaireColis';
+import RouteSelection from './CheminColis';
+import PaymentStep from './paymentStep';
 
-interface ShippingFormData {
-  country: string;
+// Interface pour les données du colis (de PackageRegistration)
+interface PackageDataForParent {
+  image: string | null;
+  designation: string;
   weight: string;
-  compensation: number;
-  relayPoint: string;
+  length: string;
+  width: string;
+  height: string;
+  isFragile: boolean;
+  contentType: 'solid' | 'liquid' | '';
+  isPerishable: boolean;
+  description: string;
+  declaredValue: string; // Ajouté depuis PackageRegistration pour l'assurance
+  isInsured: boolean;    // Ajouté depuis PackageRegistration pour l'assurance
+}
+
+// Interface pour les données globales du formulaire d'expédition,
+// y compris celles gérées par RouteSelection et celles nécessaires pour PaymentStep
+interface ShippingFormDataGlobal {
+  // Champs gérés par RouteSelection
+  departurePointName: string;
+  arrivalPointName: string;
   recipientName: string;
   recipientPhone: string;
-  recipientGender: string;
-  recipientAge: string;
-  recipientRelayPoint: string;
+  recipientEmail: string;
+  departurePointId?: number | null;
+  arrivalPointId?: number | null;
+  distance?: number; // Distance calculée par RouteSelection
+
+  // Champ pour PaymentStep (assurance/compensation)
+  compensation: number; // Sera la valeur de l'assurance calculée ou 0
+
+  // Champs optionnels que vous pourriez vouloir conserver
+  country: string;
+  // Le poids du colis sera directement pris de `packageDataForParent` pour PaymentStep
 }
+
 
 const ShippingSteps = ({ currentStep = 1 }: { currentStep?: number }) => {
   const steps = [
-    { number: 1, title: ["Je prépare", "mon envoi"], icon: <TruckIcon className="w-6 h-6" /> },
-    { number: 2, title: ["Je valide", "mon panier"], icon: <ShoppingBagIcon className="w-6 h-6" /> },
-    { number: 3, title: ["Je paie"], icon: <CreditCardIcon className="w-6 h-6" /> }
+    { number: 1, title: ["Description", "du colis"], icon: <TruckIcon className="w-7 h-7" /> },
+    { number: 2, title: ["Choix", "du trajet"], icon: <MapPinIcon className="w-7 h-7" /> },
+    { number: 3, title: ["Paiement", "& Confirmation"], icon: <CreditCardIcon className="w-7 h-7" /> },
+    // { number: 4, title: ["Où se trouve", "mon colis"], icon: <InformationCircleIcon className="w-7 h-7" /> } // Optionnel pour une étape de suivi
   ];
 
   return (
-    <div className="flex justify-center items-center mb-12 w-full">
-      <div className="flex justify-between items-center w-full max-w-4xl">
+    <div className="flex justify-center items-center mb-10 sm:mb-16 w-full px-2">
+      <div className="flex justify-between items-start w-full max-w-4xl"> {/* max-w-4xl pour un peu plus d'espace */}
         {steps.map((step, index) => (
           <React.Fragment key={step.number}>
-            {/* Numéro de l'étape au-dessus de la ligne horizontale */}
-            <div className="flex flex-col items-center group relative">
-              <div className="mb-2 font-bold text-black  text-lg">
-                {step.number}
-              </div>
-              
-              {/* Le cercle avec l'icône uniquement */}
+            <div className="flex flex-col items-center group relative text-center w-1/3 sm:w-auto">
               <div className={`
-                ${step.number <= currentStep ? "bg-green-600 text-white" : "bg-gray-200 text-gray-700"}
-                rounded-full w-14 h-14 flex items-center justify-center transition-all duration-300 
-                group-hover:scale-110 animate-pulse
-              `} style={{ animationDuration: '3s' }}>
-                {step.number < currentStep ? <CheckCircleIcon className="w-8 h-8" /> : step.icon}
+                ${step.number <= currentStep ? "bg-green-600 text-white" : "bg-gray-200 text-gray-500"}
+                rounded-full w-12 h-12 sm:w-14 sm:h-14 flex items-center justify-center transition-all duration-300 mb-2
+                group-hover:scale-110 shadow-md
+              `}>
+                {step.number < currentStep ? <SolidCheckCircleIcon className="w-7 h-7 sm:w-8 sm:h-8" /> : React.cloneElement(step.icon, { className: "w-6 h-6 sm:w-7 sm:h-7"})}
               </div>
-              
-              <div className="text-center mt-2">
-                {step.title.map((line, i) => (
-                  <p key={i} className={`font-medium ${i === 1 ? 'italic' : ''} ${
-                    step.number <= currentStep ? "text-green-700" : "text-gray-600"
-                  }`}>
-                    {line}
-                  </p>
-                ))}
-              </div>
+              {step.title.map((line, i) => (
+                <p key={i} className={`text-xs sm:text-sm font-medium leading-tight ${
+                  step.number <= currentStep ? "text-green-700" : "text-gray-600"
+                }`}>
+                  {line}
+                </p>
+              ))}
             </div>
-            
-            {/* Ligne horizontale centrée verticalement avec les cercles */}
+
             {index < steps.length - 1 && (
-              <div className={`flex-1 border-t-2 ${
-                step.number < currentStep ? "border-green-500" : "border-gray-300"
-              } mx-2 self-center transition-colors duration-300`} />
+              <div className={`flex-1 h-1 mt-6 sm:mt-7 ${ /* Ajustement de la position de la ligne */
+                step.number < currentStep ? "bg-green-500" : "bg-gray-300"
+              } mx-2 self-start transition-colors duration-300`} />
             )}
           </React.Fragment>
         ))}
@@ -80,308 +93,94 @@ const ShippingSteps = ({ currentStep = 1 }: { currentStep?: number }) => {
   );
 };
 
-const CompensationSelector = ({ value, onChange }: { value: number, onChange: (value: number) => void }) => {
-  return (
-    <div className="mt-8 bg-white p-6 rounded-lg shadow-sm border border-gray-100">
-      <div className="flex items-center mb-4">
-        <ShieldIcon className="w-6 h-6 text-green-600 mr-2" />
-        <h2 className="text-2xl text-black font-medium">Indemnisation :</h2>
-      </div>
-      <p className="mb-4 text-gray-600">Votre colis est couvert à hauteur de 5 000 FCFA. Il a une valeur supérieure ? Choisissez le montant d'indemnisation souhaité.</p>
-      
-      <div className="flex items-center justify-center border rounded-lg w-full max-w-md mx-auto bg-green-50 transition-all hover:bg-green-100 duration-300">
-        <button 
-          className="p-4 transition-transform hover:scale-110"
-          onClick={() => onChange(Math.max(5000, value - 5000))}
-          aria-label="Diminuer l'indemnisation"
-        >
-          <MinusCircleIcon className="w-8 h-8 text-green-600" />
-        </button>
-        <div className="flex-1 text-center py-4">
-          <p className="text-2xl font-bold text-green-700">{value.toLocaleString()} FCFA</p>
-          <p className="text-green-600">Inclus</p>
-        </div>
-        <button 
-          className="p-4 transition-transform hover:scale-110"
-          onClick={() => onChange(value + 5000)}
-          aria-label="Augmenter l'indemnisation"
-        >
-          <PlusCircleIcon className="w-8 h-8 text-green-600" />
-        </button>
-      </div>
-    </div>
-  );
-};
-
-// Icone personnalisée pour le bouclier
-const ShieldIcon = ({ className }: { className?: string }) => (
-  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={className}>
-    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
-  </svg>
-);
-
-// Animation de chargement
-const LoadingDots = () => (
-  <div className="flex space-x-1 items-center justify-center">
-    <div className="w-2 h-2 bg-green-600 rounded-full animate-bounce" style={{ animationDelay: '0s' }}></div>
-    <div className="w-2 h-2 bg-green-600 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-    <div className="w-2 h-2 bg-green-600 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></div>
-  </div>
-);
-
-const RelayPointSelector = ({ value, onChange }: { value: string, onChange: (value: string) => void }) => {
-  const [isLoading, setIsLoading] = useState(false);
-  const [points, setPoints] = useState([
-    { id: 'relay1', name: 'Supermarché Mahima', address: 'Rue 1.839, Yaoundé', distance: '0.5 km'},
-    { id: 'relay2', name: 'Librairie Papyrus', address: 'Avenue Kennedy, Douala', distance: '0.8 km'},
-    { id: 'relay3', name: 'Boutique Express', address: 'Marché Central, Bafoussam', distance: '1.2 km'}
-  ]);
-
-  useEffect(() => {
-    if (value === '') {
-      // Simuler le chargement des points relais
-      setIsLoading(true);
-      setTimeout(() => {
-        setIsLoading(false);
-      }, 1000);
-    }
-  }, [value]);
-
-  return (
-    <div className="mt-8 bg-white p-6 rounded-lg shadow-sm border border-gray-100">
-      <div className="flex items-center mb-4">
-        <MapPinIcon className="w-6 h-6 text-green-600 mr-2" />
-        <h2 className="text-2xl text-black  font-medium">Point relais :</h2>
-      </div>
-      <p className="mb-4 text-gray-600">Choisissez un point relais proche de chez vous pour déposer votre colis.</p>
-      
-      {isLoading ? (
-        <div className="h-40 flex items-center justify-center">
-          <LoadingDots />
-        </div>
-      ) : (
-        <div className="space-y-4">
-          {points.map(point => (
-            <div 
-              key={point.id}
-              className={`border rounded-lg p-4 cursor-pointer transition-all duration-300 hover:shadow-md ${
-                value === point.id ? 'border-green-500 bg-green-50' : 'border-gray-200'
-              }`}
-              onClick={() => onChange(point.id)}
-            >
-              <div className="flex items-start">
-                <div className={`min-w-6 h-6 rounded-full border-2 mr-3 mt-1 flex items-center justify-center ${
-                  value === point.id ? 'border-green-500 bg-green-100' : 'border-gray-300'
-                }`}>
-                  {value === point.id && <div className="w-3 h-3 bg-green-500 rounded-full"></div>}
-                </div>
-                <div>
-                  <h3 className="font-medium text-gray-700 ">{point.name}</h3>
-                  <p className="text-gray-600 text-sm">{point.address}</p>
-                  <div className="flex items-center mt-1">
-                    <MapPinIcon className="w-4 h-4 text-green-600 mr-1" />
-                    <span className="text-green-600 text-sm">{point.distance}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-};
-
-const RecipientForm = ({ formData, setFormData }: { 
-  formData: ShippingFormData, 
-  setFormData: React.Dispatch<React.SetStateAction<ShippingFormData>> 
-}) => {
-  const [isLoading, setIsLoading] = useState(false);
-  const recipientPoints = [
-    { id: 'dest1', name: 'Supermarché Central', address: 'Avenue de l\'Indépendance, Yaoundé', region: 'Yaoundé' },
-    { id: 'dest2', name: 'Boutique Akwa', address: 'Boulevard de la Liberté, Douala', region: 'Douala' },
-    { id: 'dest3', name: 'Kiosque Express', address: 'Route de Foumban, Bafoussam', region: 'Bafoussam' }
-  ];
-
-  useEffect(() => {
-    setIsLoading(true);
-    setTimeout(() => {
-      setIsLoading(false);
-    }, 800);
-  }, []);
-
-  return (
-    <div className="mt-8 bg-white p-6 rounded-lg shadow-sm border border-gray-100">
-      <div className="flex items-center mb-4">
-        <UserIcon className="w-6 h-6 text-green-600 mr-2" />
-        <h2 className="text-2xl text-black  font-medium">Mon destinataire</h2>
-      </div>
-      
-      {isLoading ? (
-        <div className="h-40 flex items-center justify-center">
-          <LoadingDots />
-        </div>
-      ) : (
-        <div className="space-y-4 animate-fadeIn" style={{ animationDuration: '0.5s' }}>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label htmlFor="recipientName" className="block mb-2 text-gray-500  font-medium">
-                Nom complet <span className="text-red-500">*</span>
-              </label>
-              <input
-                id="recipientName"
-                type="text"
-                className="w-full text-black  border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all"
-                placeholder="Nom du destinataire"
-                value={formData.recipientName}
-                onChange={(e) => setFormData(prev => ({ ...prev, recipientName: e.target.value }))}
-              />
-            </div>
-            <div>
-              <label htmlFor="recipientPhone" className="block text-gray-500 mb-2 font-medium">
-                Numéro de téléphone <span className="text-red-500">*</span>
-              </label>
-              <input
-                id="recipientPhone"
-                type="text"
-                className="w-full border text-black  border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all"
-                placeholder="Ex: 6XXXXXXXX"
-                value={formData.recipientPhone}
-                onChange={(e) => setFormData(prev => ({ ...prev, recipientPhone: e.target.value }))}
-              />
-            </div>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label htmlFor="recipientGender" className="block text-gray-500 mb-2 font-medium">
-                Sexe
-              </label>
-              <select
-                id="recipientGender"
-                className="w-full border border-gray-300 text-black  rounded-lg p-3 appearance-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all"
-                value={formData.recipientGender}
-                onChange={(e) => setFormData(prev => ({ ...prev, recipientGender: e.target.value }))}
-              >
-                <option value="">Sélectionner</option>
-                <option value="M">Masculin</option>
-                <option value="F">Féminin</option>
-              </select>
-            </div>
-            <div>
-              <label htmlFor="recipientAge" className="text-gray-500 block mb-2 font-medium">
-                Âge
-              </label>
-              <input
-                id="recipientAge"
-                type="number"
-                min="18"
-                max="100"
-                className="w-full text-black border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all"
-                placeholder="Âge du destinataire"
-                value={formData.recipientAge}
-                onChange={(e) => setFormData(prev => ({ ...prev, recipientAge: e.target.value }))}
-              />
-            </div>
-          </div>
-          
-          <div>
-            <label className="block text-gray-500 mb-2 font-medium">
-              Point relais pour la réception <span className="text-red-500">*</span>
-            </label>
-            <div className="space-y-3">
-              {recipientPoints.map(point => (
-                <div 
-                  key={point.id}
-                  className={`border rounded-lg p-4 cursor-pointer transition-all duration-300 hover:shadow-md ${
-                    formData.recipientRelayPoint === point.id ? 'border-green-500 bg-green-50' : 'border-gray-200'
-                  }`}
-                  onClick={() => setFormData(prev => ({ ...prev, recipientRelayPoint: point.id }))}
-                >
-                  <div className="flex items-start">
-                    <div className={`min-w-6 h-6 rounded-full border-2 mr-3 mt-1 flex items-center justify-center ${
-                      formData.recipientRelayPoint === point.id ? 'border-green-500 bg-green-100' : 'border-gray-300'
-                    }`}>
-                      {formData.recipientRelayPoint === point.id && <div className="w-3 h-3 bg-green-500 rounded-full"></div>}
-                    </div>
-                    <div>
-                      <h3 className="font-medium text-black ">{point.name}</h3>
-                      <p className="text-gray-600 text-sm">{point.address}</p>
-                      <div className="flex items-center mt-1">
-                        <MapPinIcon className="w-4 h-4 text-green-600 mr-1" />
-                        <span className="text-green-600 text-sm">{point.region}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-};
-
 const ShippingPage = () => {
-  const [formData, setFormData] = useState<ShippingFormData>({
-    country: 'Cameroun',
-    weight: '',
-    compensation: 15000,
-    relayPoint: '',
+  const [currentStep, setCurrentStep] = useState(1);
+  const [packageDataForParent, setPackageDataForParent] = useState<PackageDataForParent | null>(null);
+
+  const [formDataGlobal, setFormDataGlobal] = useState<ShippingFormDataGlobal>({
+    departurePointName: '',
+    arrivalPointName: '',
     recipientName: '',
     recipientPhone: '',
-    recipientGender: '',
-    recipientAge: '',
-    recipientRelayPoint: ''
+    recipientEmail: '',
+    departurePointId: null,
+    arrivalPointId: null,
+    distance: 0,
+    compensation: 0, // Initialisé à 0
+    country: 'Cameroun',
   });
-  
-  const [isWeightValid, setIsWeightValid] = useState(true);
-  const [priceLoading, setPriceLoading] = useState(false);
-  const [price, setPrice] = useState<number | null>(null);
 
-  const handleCompensationChange = (value: number) => {
-    setFormData(prev => ({ ...prev, compensation: value }));
-    updatePrice();
-  };
-
-  const handleRelayPointChange = (value: string) => {
-    setFormData(prev => ({ ...prev, relayPoint: value }));
-  };
-
-  const handleWeightChange = (value: string) => {
-    // Autoriser seulement les chiffres et un point decimal
-    const regex = /^(\d+)?(\.\d{0,2})?$/;
-    if (value === '' || regex.test(value)) {
-      setFormData(prev => ({ ...prev, weight: value }));
-      setIsWeightValid(true);
-      updatePrice();
-    } else {
-      setIsWeightValid(false);
-    }
-  };
-
-  const updatePrice = () => {
-    const weight = parseFloat(formData.weight);
-    if (!isNaN(weight) && weight > 0) {
-      setPriceLoading(true);
-      setTimeout(() => {
-        // Calcul simple du prix basé sur le poids et la compensation
-        const basePrice = 3000 + weight * 1000;
-        const compensationFee = (formData.compensation > 15000) ? (formData.compensation - 15000) * 0.005 : 0;
-        setPrice(basePrice + compensationFee);
-        setPriceLoading(false);
-      }, 800);
-    } else {
-      setPrice(null);
-    }
-  };
-
+  // Charger les données depuis localStorage au montage
   useEffect(() => {
-    updatePrice();
-  }, [formData.weight]);
+    const savedPackageDataString = localStorage.getItem('packageData');
+    const savedShippingFormDataString = localStorage.getItem('shippingFormDataGlobal');
 
-  // Animation CSS personnalisée
+    if (savedPackageDataString) {
+      try {
+        setPackageDataForParent(JSON.parse(savedPackageDataString));
+      } catch (e) { console.error("Erreur parsing packageData:", e); }
+    }
+
+    if (savedShippingFormDataString) {
+      try {
+        const parsedFormData = JSON.parse(savedShippingFormDataString);
+        setFormDataGlobal(prev => ({
+          ...prev,
+          ...parsedFormData,
+          compensation: parsedFormData.compensation || 0, // S'assurer que compensation a une valeur
+        }));
+      } catch (e) { console.error("Erreur parsing shippingFormDataGlobal:", e); }
+    }
+
+    const savedCurrentStep = localStorage.getItem('shippingCurrentStep');
+    if (savedCurrentStep) {
+        const step = parseInt(savedCurrentStep, 10);
+        if (step >= 1 && step <= 3) { // Limiter aux étapes valides pour reprise
+             setCurrentStep(step);
+        }
+    }
+
+  }, []);
+
+  // Sauvegarder formDataGlobal et currentStep dans localStorage
+  useEffect(() => {
+    if (Object.keys(formDataGlobal).some(key => formDataGlobal[key as keyof ShippingFormDataGlobal] !== '' && formDataGlobal[key as keyof ShippingFormDataGlobal] !== null && formDataGlobal[key as keyof ShippingFormDataGlobal] !== 0)) { // Sauvegarder si pas vide
+        localStorage.setItem('shippingFormDataGlobal', JSON.stringify(formDataGlobal));
+    }
+    localStorage.setItem('shippingCurrentStep', currentStep.toString());
+  }, [formDataGlobal, currentStep]);
+
+  // Sauvegarder packageDataForParent dans localStorage
+  useEffect(() => {
+    if (packageDataForParent) {
+      localStorage.setItem('packageData', JSON.stringify(packageDataForParent));
+    }
+  }, [packageDataForParent]);
+
+
+  const handlePackageSubmit = (data: PackageDataForParent) => {
+    setPackageDataForParent(data);
+    // Calculer l'assurance (compensation) si l'option est cochée et valeur déclarée existe
+    let insuranceAmount = 0;
+    if (data.isInsured && data.declaredValue) {
+        const declaredVal = parseFloat(data.declaredValue);
+        if (!isNaN(declaredVal) && declaredVal > 0) {
+            insuranceAmount = declaredVal * 0.05; // 5% de la valeur déclarée
+        }
+    }
+    setFormDataGlobal(prev => ({ ...prev, compensation: insuranceAmount }));
+    setCurrentStep(2);
+  };
+
+  const handleNextStep = () => {
+    setCurrentStep(prev => Math.min(prev + 1, 3)); // Limiter à 3 étapes pour l'instant
+  };
+
+  const handleBackStep = () => {
+    setCurrentStep(prev => Math.max(prev - 1, 1));
+  };
+
+  // Animation fadeIn (optionnel, si non géré globalement)
   useEffect(() => {
     const style = document.createElement('style');
     style.innerHTML = `
@@ -389,209 +188,81 @@ const ShippingPage = () => {
         from { opacity: 0; transform: translateY(10px); }
         to { opacity: 1; transform: translateY(0); }
       }
-      .animate-fadeIn {
-        animation: fadeIn 0.5s ease-out forwards;
-      }
+      .animate-fadeIn { animation: fadeIn 0.5s ease-out forwards; }
     `;
     document.head.appendChild(style);
-    return () => {
-      document.head.removeChild(style);
-    };
+    return () => { document.head.removeChild(style); };
   }, []);
 
-  const points = [
-    { id: 'relay1', name: 'Supermarché Mahima', address: 'Rue 1.839, Yaoundé', distance: '0.5 km'},
-    { id: 'relay2', name: 'Librairie Papyrus', address: 'Avenue Kennedy, Douala', distance: '0.8 km'},
-    { id: 'relay3', name: 'Boutique Express', address: 'Marché Central, Bafoussam', distance: '1.2 km'}
-  ];
+  const renderCurrentStep = () => {
+    switch (currentStep) {
+      case 1:
+        // Passer initialData à PackageRegistration si on veut pré-remplir
+        return <PackageRegistration onContinue={handlePackageSubmit} />;
+      case 2:
+        return (
+          <RouteSelection
+            formData={formDataGlobal} // Utilise l'état global
+            setFormData={setFormDataGlobal} // Met à jour l'état global
+            onNext={handleNextStep}
+            onBack={handleBackStep}
+          />
+        );
+      case 3:
+        if (!packageDataForParent) {
+            console.warn("Données du colis manquantes pour l'étape de paiement. Retour à l'étape 1.");
+            setCurrentStep(1);
+            return <p className="text-center text-red-500">Données du colis manquantes. Veuillez recommencer.</p>;
+        }
+        if (!formDataGlobal.departurePointId || !formDataGlobal.arrivalPointId) {
+            console.warn("Points de départ/arrivée manquants pour l'étape de paiement. Retour à l'étape 2.");
+            setCurrentStep(2);
+            return <p className="text-center text-red-500">Sélection des points relais incomplète. Veuillez recommencer.</p>;
+        }
+        return (
+          <PaymentStep
+            onBack={handleBackStep}
+            // onPaymentSuccess={handleNextStep} // Si vous avez une 4ème étape de confirmation/suivi
+            packageData={packageDataForParent} // Passer les données du colis
+            formData={formDataGlobal}      // Passer les données globales du formulaire
+          />
+        );
+      // case 4: // Si vous ajoutez une étape de suivi
+      //   return ( /* Votre composant de suivi ici */ );
+      default:
+        return <PackageRegistration onContinue={handlePackageSubmit} />;
+    }
+  };
 
   return (
-    <div className="min-h-screen bg-green-50">
+    <div className="min-h-screen bg-slate-100">
       <Head>
-        <title>Expédier un colis</title>
+        <title>Expédier un colis - Pick & Drop Link</title>
         <meta name="description" content="Service d'expédition de colis via notre réseau de points relais au Cameroun" />
       </Head>
-
       <Navbar/>
-
-      <main className="max-w-7xl mx-auto px-4 py-8">
-        <div className="flex items-center justify-center mb-8">
-          <h1 className="text-4xl font-bold text-green-700 text-center">Grâce à nous, envoyez vos colis en toute sécurité partout au Cameroun.</h1>
+      <main className="container mx-auto px-3 sm:px-4 lg:px-6 py-6 sm:py-8">
+        <div className="text-center mb-8 sm:mb-10">
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-800">
+            Envoyez vos colis <span className="text-green-600">facilement</span> et en <span className="text-green-600">toute sécurité</span>.
+          </h1>
+          <p className="mt-2 sm:mt-3 text-md sm:text-lg text-slate-600 max-w-2xl mx-auto">
+            Utilisez notre réseau de points relais étendu pour tous vos besoins d'expédition.
+          </p>
         </div>
-        
-        <div className="bg-white rounded-xl shadow-sm p-8 mb-8 border border-gray-100">
-          <h1 className="text-3xl font-bold text-center text-green-700 mb-8">Comment expédier un colis sur CamerXpress ?</h1>
-          
-          {/* Steps */}
-          <ShippingSteps currentStep={1} />
-          
-          <div className="flex flex-col md:flex-row gap-8">
-            {/* Left column - Form */}
-            <div className="flex-1">
-              <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100 mb-6 animate-fadeIn" style={{ animationDelay: '0.1s' }}>
-                <div className="flex items-center mb-4">
-                  <TruckIcon className="w-6 h-6 text-green-600 mr-2" />
-                  <h2 className="text-2xl text-black  font-medium">Mon colis</h2>
-                </div>
-                
-                <div className="mb-6">
-                  <label htmlFor="country" className="block text-gray-500 mb-2 font-medium">
-                    Région de destination <span className="text-red-500">*</span>
-                  </label>
-                  <div className="relative">
-                    <select
-                      id="country"
-                      className="w-full text-black border border-gray-300 rounded-lg p-3 appearance-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all"
-                      value={formData.country}
-                      onChange={(e) => setFormData(prev => ({ ...prev, country: e.target.value }))}
-                    >
-                      <option value="Cameroun">Ngaoundéré</option>
-                      <option value="Yaoundé">Yaoundé</option>
-                      <option value="Douala">Douala</option>
-                      <option value="Bafoussam">Bafoussam</option>
-                      <option value="Garoua">Garoua</option>
-                      <option value="Maroua">Maroua</option>
-                    </select>
-                    <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                      <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                      </svg>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="mb-6">
-                  <label htmlFor="weight" className="block text-gray-500 mb-2 font-medium">
-                    Poids <span className="text-red-500">*</span>
-                  </label>
-                  <div className="relative">
-                    <input
-                      id="weight"
-                      type="text"
-                      className={`w-full text-black border rounded-lg p-3 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all ${
-                        isWeightValid ? 'border-gray-300' : 'border-red-500'
-                      }`}
-                      placeholder="Entrez le poids"
-                      value={formData.weight}
-                      onChange={(e) => handleWeightChange(e.target.value)}
-                    />
-                    <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                      <span className="text-gray-500">Kg</span>
-                    </div>
-                  </div>
-                  {!isWeightValid && <p className="text-red-500 text-sm mt-1">Veuillez entrer un poids valide</p>}
-                  
-                  <div className="flex items-center text-gray-600 mt-3 hover:text-green-600 transition-colors group cursor-pointer">
-                    <InformationCircleIcon className="w-5 h-5 mr-2 group-hover:text-green-600" />
-                    <span className="text-sm underline">Aide pour estimer le poids & dimensions</span>
-                  </div>
-                </div>
-              </div>
-              
-              {/* Compensation selector */}
-              <CompensationSelector value={formData.compensation} onChange={handleCompensationChange} />
-              
-              {/* Relay Point selector */}
-              <RelayPointSelector value={formData.relayPoint} onChange={handleRelayPointChange} />
-              
-              {/* Recipient Form */}
-              <RecipientForm formData={formData} setFormData={setFormData} />
-            </div>
-            
-            {/* Right column - Summary */}
-            <div className="w-full md:w-96 bg-gray-100 p-6 rounded-lg shadow-lg border border-gray-100 h-fit sticky top-4 animate-fadeIn" style={{ animationDelay: '0.3s' }}>
-              <h3 className="text-lg font-bold mb-6 text-green-700 flex items-center">
-                <ShoppingBagIcon className="w-5 h-5 mr-2" />
-                VOTRE ENVOI
-              </h3>
-              
-              <div className="flex items-start mb-6">
-                <div className="bg-green-100 p-3 rounded-lg mr-4">
-                  <TruckIcon className="w-10 h-10 text-green-600" />
-                </div>
-                <div>
-                  <p className="font-medium text-black ">Votre colis en cours...</p>
-                  <p className="text-sm text-gray-500">Livraison en point relais</p>
-                </div>
-              </div>
-              
-              <div className="border-b border-gray-300 pb-4 mb-4">
-                <div className="flex justify-between mb-2">
-                  <span className="text-gray-600">Destination :</span>
-                  <span className="font-medium text-black">{formData.country}</span>
-                </div>
-                <div className="flex justify-between mb-2">
-                  <span className="text-gray-600">Poids :</span>
-                  <span className="font-medium text-black ">{formData.weight || "..."} kg</span>
-                </div>
-                <div className="flex justify-between mb-2">
-                  <span className="text-gray-600">Point relais expéditeur :</span>
-                  <span className="font-medium text-black">
-                    {formData.relayPoint ? points.find(p => p.id === formData.relayPoint)?.name || "..." : "..."}
-                  </span>
-                </div>
-                <div className="flex justify-between mb-2">
-                  <span className="text-gray-600">Destinataire :</span>
-                  <span className="font-medium text-black ">{formData.recipientName || "..."}</span>
-                </div>
-                <div className="flex justify-between mb-2">
-                  <span className="text-gray-600">Point relais destinataire :</span>
-                  <span className="font-medium text-black">
-                    {formData.relayPoint ? points.find(p => p.id === formData.recipientRelayPoint)?.name || "..." : "..."}
-                  </span>
-                </div>
-              </div>
-              
-              <div className="border-b border-gray-300 pb-4 mb-4">
-                <div className="flex justify-between mb-2">
-                  <span className="text-gray-600">Prix de l'envoi :</span>
-                  <span className="font-medium text-black ">
-                    {priceLoading ? <LoadingDots /> : price !== null ? `${price.toLocaleString()} FCFA` : "..."}
-                  </span>
-                </div>
-                <div className="flex justify-between mb-2">
-                  <span className="text-gray-600">Indemnisation :</span>
-                  <span className="font-medium text-green-700">{formData.compensation.toLocaleString()} FCFA</span>
-                </div>
-              </div>
-              
-              <div className="flex justify-between mb-8">
-                <span className="font-bold text-black">Prix final</span>
-                <span className="font-bold text-xl text-green-700">
-                  {priceLoading ? <LoadingDots /> : price !== null ? `${price.toLocaleString()} FCFA` : "..."}
-                </span>
-              </div>
-              
-              <button 
-                className={`w-full py-3 px-6 rounded-lg font-medium text-white flex items-center justify-center transition-all ${
-                  formData.weight && formData.relayPoint && formData.recipientName && 
-                  formData.recipientPhone && formData.recipientRelayPoint ? 
-                  'bg-green-600 hover:bg-green-700 animate-pulse' : 
-                  'bg-gray-400 cursor-not-allowed'
-                }`} style={{ animationDuration: '2s' }}
-                disabled={!formData.weight || !formData.relayPoint || !formData.recipientName || 
-                          !formData.recipientPhone || !formData.recipientRelayPoint}
-              >
-                Continuer
-                <ArrowRightIcon className="w-5 h-5 ml-2" />
-              </button>
-              
-              {(!formData.weight || !formData.relayPoint || !formData.recipientName || 
-                !formData.recipientPhone || !formData.recipientRelayPoint) && (
-                <p className="text-sm text-center mt-2 text-orange-500">
-                  Veuillez remplir tous les champs requis
-                </p>
-              )}
-            </div>
+
+        <div className="bg-white rounded-lg sm:rounded-xl shadow-lg p-4 sm:p-6 md:p-8 mb-8 border border-gray-200">
+          <ShippingSteps currentStep={currentStep} />
+          <div className="mt-6 animate-fadeIn">
+            {renderCurrentStep()}
           </div>
         </div>
       </main>
-      
-      {/* Help button with animation */}
-      <div className="fixed bottom-6 right-6">
-        <button className="bg-green-100 hover:bg-green-200 text-green-700 rounded-full p-4 shadow-lg flex items-center transition-transform hover:scale-105 animate-bounce" style={{ animationDuration: '2s', animationIterationCount: 3 }}>
-          <span className="mr-2">Besoin d'aide ?</span>
-          <ChatBubbleOvalLeftEllipsisIcon className="w-8 h-8" />
+
+      <div className="fixed bottom-5 right-5 sm:bottom-6 sm:right-6 z-50">
+        <button className="bg-green-600 hover:bg-green-700 text-white rounded-full p-3 shadow-lg flex items-center transition-all duration-200 hover:scale-105 animate-bounce" style={{ animationDuration: '2.5s', animationDelay: '1s', animationIterationCount: 3 }}>
+          <ChatBubbleOvalLeftEllipsisIcon className="w-6 h-6" />
+          <span className="ml-2 hidden sm:inline text-sm font-medium">Support</span>
         </button>
       </div>
     </div>

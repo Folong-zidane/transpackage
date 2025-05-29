@@ -12,18 +12,26 @@ export interface PointRelais {
     quartier: string; // Ajout du quartier pour faciliter la recherche
     type: 'bureau' | 'commerce' | 'agence'; // Type de point relais
     services: string[]; // Services disponibles dans ce point relais
+    photo?: string;
+    contact?: string;
+    capacity?: number;
   }
   
   // Coordonnées approximatives du centre de Yaoundé
   export const YAOUNDE_CENTER: [number, number] = [3.848, 11.502];
+  // Coordonnées du centre de Yaoundé (à utiliser comme fallback)
+export const YAOUNDE_CENTER_FALLBACK: [number, number] = [3.866667, 11.516667];
   // Zoom par défaut pour la carte de Yaoundé
   export const YAOUNDE_ZOOM = 13;
+  // Rayon de recherche des points proches en MÈTRES
+export const NEARBY_RADIUS_METERS: number = 3000;
   // Limites approximatives de la ville pour restreindre la vue de la carte
   export const YAOUNDE_BOUNDS = {
     northEast: [3.935, 11.585], // Nord-Est
     southWest: [3.760, 11.420], // Sud-Ouest
   };
-  
+  // Zoom initial de la carte en cas de fallback (si la géolocalisation échoue)
+export const INITIAL_MAP_ZOOM_FALLBACK: number = 12;
   // Rayon de recherche en km pour les points proches
   export const NEARBY_RADIUS = 3;
   
