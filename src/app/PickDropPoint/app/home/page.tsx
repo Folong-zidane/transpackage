@@ -1,5 +1,5 @@
 'use client';
-import { Package, PackagePlus, MapPin, PackageCheck, PackageOpen, CreditCard, CheckCircle, BarChart3, Bell, ShieldCheck, Search, Compass, FastForward, HandCoins, CloudLightning, MapPinHouse } from 'lucide-react'; // Ajout des icônes nécessaires
+import { Package, PackagePlus, MapPin, PackageCheck, PackageOpen, CreditCard, CheckCircle, BarChart3, Bell, ShieldCheck, Search, Compass, FastForward, HandCoins, CloudLightning, MapPinHouse, Settings } from 'lucide-react'; // Ajout des icônes nécessaires
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 
@@ -22,7 +22,7 @@ export default function HomePage() {
       title: "Dashboard",
       description: "Consulter les statistique de mon point relais",
       href: "/point-de-relais-dashboard",
-      icon: <MapPin className="h-8 w-8 text-white" />, // Lucide Icon
+      icon: <Settings className="h-8 w-8 text-white" />, // Lucide Icon
       color: "from-green-400 to-green-500"
     },
     {

@@ -88,7 +88,7 @@ export function Settings() {
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="address">Adresse</Label>
+                    <Label htmlFor="address">Adresse Informelle </Label>
                     <Textarea id="address" defaultValue="123 Rue de la République, 75001 Paris" />
                   </div>
                   <div className="grid grid-cols-2 gap-4">

@@ -3,17 +3,19 @@ import React, { useState, useEffect } from 'react';
 import {
   TruckIcon,
   MapPinIcon,
+  PencilIcon as SignatureIcon, // Nouvelle icône pour la signature
   CreditCardIcon,
-  InformationCircleIcon, // Utilisé dans ShippingSteps
+  InformationCircleIcon,
 } from '@heroicons/react/24/outline';
-import { ChatBubbleOvalLeftEllipsisIcon, CheckCircleIcon as SolidCheckCircleIcon } from '@heroicons/react/24/solid'; // Renommé pour éviter conflit
+import { ChatBubbleOvalLeftEllipsisIcon, CheckCircleIcon as SolidCheckCircleIcon } from '@heroicons/react/24/solid';
 import Head from 'next/head';
-import Navbar from '@/components/home/Navbar';
+import Navbar from '@/components/home/Navbar'; // Assurez-vous que le chemin est correct
 import PackageRegistration from './FomulaireColis';
-import RouteSelection from './CheminColis';
+import RouteSelection from './CheminColis'; // ou RoutePacket si c'est le même fichier
+import DigitalSignature from '../PickDropPoint/app/emit-package/Sign'; // Importez le composant de signature
 import PaymentStep from './paymentStep';
 
-// Interface pour les données du colis (de PackageRegistration)
+// Interface pour les données du colis
 interface PackageDataForParent {
   image: string | null;
   designation: string;
@@ -25,14 +27,12 @@ interface PackageDataForParent {
   contentType: 'solid' | 'liquid' | '';
   isPerishable: boolean;
   description: string;
-  declaredValue: string; // Ajouté depuis PackageRegistration pour l'assurance
-  isInsured: boolean;    // Ajouté depuis PackageRegistration pour l'assurance
+  declaredValue: string;
+  isInsured: boolean;
 }
 
-// Interface pour les données globales du formulaire d'expédition,
-// y compris celles gérées par RouteSelection et celles nécessaires pour PaymentStep
+// Interface pour les données globales du formulaire d'expédition
 interface ShippingFormDataGlobal {
-  // Champs gérés par RouteSelection
   departurePointName: string;
   arrivalPointName: string;
   recipientName: string;
@@ -40,14 +40,10 @@ interface ShippingFormDataGlobal {
   recipientEmail: string;
   departurePointId?: number | null;
   arrivalPointId?: number | null;
-  distance?: number; // Distance calculée par RouteSelection
-
-  // Champ pour PaymentStep (assurance/compensation)
-  compensation: number; // Sera la valeur de l'assurance calculée ou 0
-
-  // Champs optionnels que vous pourriez vouloir conserver
+  distance?: number;
+  compensation: number;
   country: string;
-  // Le poids du colis sera directement pris de `packageDataForParent` pour PaymentStep
+  signatureData?: string | null; // Nouvelle propriété pour la signature
 }
 
 
@@ -55,16 +51,16 @@ const ShippingSteps = ({ currentStep = 1 }: { currentStep?: number }) => {
   const steps = [
     { number: 1, title: ["Description", "du colis"], icon: <TruckIcon className="w-7 h-7" /> },
     { number: 2, title: ["Choix", "du trajet"], icon: <MapPinIcon className="w-7 h-7" /> },
-    { number: 3, title: ["Paiement", "& Confirmation"], icon: <CreditCardIcon className="w-7 h-7" /> },
-    // { number: 4, title: ["Où se trouve", "mon colis"], icon: <InformationCircleIcon className="w-7 h-7" /> } // Optionnel pour une étape de suivi
+    { number: 3, title: ["Votre", "Signature"], icon: <SignatureIcon className="w-7 h-7" /> }, // Nouvelle étape
+    { number: 4, title: ["Paiement", "& Confirmation"], icon: <CreditCardIcon className="w-7 h-7" /> }, // Étape décalée
   ];
 
   return (
     <div className="flex justify-center items-center mb-10 sm:mb-16 w-full px-2">
-      <div className="flex justify-between items-start w-full max-w-4xl"> {/* max-w-4xl pour un peu plus d'espace */}
+      <div className="flex justify-between items-start w-full max-w-5xl"> {/* max-w-5xl pour plus d'espace */}
         {steps.map((step, index) => (
           <React.Fragment key={step.number}>
-            <div className="flex flex-col items-center group relative text-center w-1/3 sm:w-auto">
+            <div className="flex flex-col items-center group relative text-center w-1/4 sm:w-auto"> {/* w-1/4 car 4 étapes */}
               <div className={`
                 ${step.number <= currentStep ? "bg-green-600 text-white" : "bg-gray-200 text-gray-500"}
                 rounded-full w-12 h-12 sm:w-14 sm:h-14 flex items-center justify-center transition-all duration-300 mb-2
@@ -82,7 +78,7 @@ const ShippingSteps = ({ currentStep = 1 }: { currentStep?: number }) => {
             </div>
 
             {index < steps.length - 1 && (
-              <div className={`flex-1 h-1 mt-6 sm:mt-7 ${ /* Ajustement de la position de la ligne */
+              <div className={`flex-1 h-1 mt-6 sm:mt-7 ${
                 step.number < currentStep ? "bg-green-500" : "bg-gray-300"
               } mx-2 self-start transition-colors duration-300`} />
             )}
@@ -106,19 +102,20 @@ const ShippingPage = () => {
     departurePointId: null,
     arrivalPointId: null,
     distance: 0,
-    compensation: 0, // Initialisé à 0
+    compensation: 0,
     country: 'Cameroun',
+    signatureData: null, // Initialiser
   });
 
   // Charger les données depuis localStorage au montage
   useEffect(() => {
     const savedPackageDataString = localStorage.getItem('packageData');
     const savedShippingFormDataString = localStorage.getItem('shippingFormDataGlobal');
+    const savedCurrentStep = localStorage.getItem('shippingCurrentStep');
 
     if (savedPackageDataString) {
-      try {
-        setPackageDataForParent(JSON.parse(savedPackageDataString));
-      } catch (e) { console.error("Erreur parsing packageData:", e); }
+      try { setPackageDataForParent(JSON.parse(savedPackageDataString)); }
+      catch (e) { console.error("Erreur parsing packageData:", e); }
     }
 
     if (savedShippingFormDataString) {
@@ -127,24 +124,25 @@ const ShippingPage = () => {
         setFormDataGlobal(prev => ({
           ...prev,
           ...parsedFormData,
-          compensation: parsedFormData.compensation || 0, // S'assurer que compensation a une valeur
+          compensation: parsedFormData.compensation || 0,
+          signatureData: parsedFormData.signatureData || null, // Charger la signature
         }));
       } catch (e) { console.error("Erreur parsing shippingFormDataGlobal:", e); }
     }
 
-    const savedCurrentStep = localStorage.getItem('shippingCurrentStep');
     if (savedCurrentStep) {
         const step = parseInt(savedCurrentStep, 10);
-        if (step >= 1 && step <= 3) { // Limiter aux étapes valides pour reprise
+        if (step >= 1 && step <= 4) { // Limiter aux étapes valides (maintenant 4)
              setCurrentStep(step);
         }
     }
-
-  }, []);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Exécuter une seule fois au montage
 
   // Sauvegarder formDataGlobal et currentStep dans localStorage
   useEffect(() => {
-    if (Object.keys(formDataGlobal).some(key => formDataGlobal[key as keyof ShippingFormDataGlobal] !== '' && formDataGlobal[key as keyof ShippingFormDataGlobal] !== null && formDataGlobal[key as keyof ShippingFormDataGlobal] !== 0)) { // Sauvegarder si pas vide
+    // Sauvegarder si au moins une valeur significative est présente
+    if (Object.values(formDataGlobal).some(value => value !== '' && value !== null && value !== 0)) {
         localStorage.setItem('shippingFormDataGlobal', JSON.stringify(formDataGlobal));
     }
     localStorage.setItem('shippingCurrentStep', currentStep.toString());
@@ -160,27 +158,36 @@ const ShippingPage = () => {
 
   const handlePackageSubmit = (data: PackageDataForParent) => {
     setPackageDataForParent(data);
-    // Calculer l'assurance (compensation) si l'option est cochée et valeur déclarée existe
     let insuranceAmount = 0;
     if (data.isInsured && data.declaredValue) {
         const declaredVal = parseFloat(data.declaredValue);
         if (!isNaN(declaredVal) && declaredVal > 0) {
-            insuranceAmount = declaredVal * 0.05; // 5% de la valeur déclarée
+            insuranceAmount = declaredVal * 0.05;
         }
     }
     setFormDataGlobal(prev => ({ ...prev, compensation: insuranceAmount }));
     setCurrentStep(2);
   };
 
-  const handleNextStep = () => {
-    setCurrentStep(prev => Math.min(prev + 1, 3)); // Limiter à 3 étapes pour l'instant
+  const handleRouteSelectionSubmit = () => { // Appelé après l'étape du choix du trajet
+    setCurrentStep(3); // Passer à l'étape de signature
   };
+
+  const handleSignatureSubmit = (signatureData: string) => { // Appelé après la soumission de la signature
+    setFormDataGlobal(prev => ({ ...prev, signatureData }));
+    setCurrentStep(4); // Passer à l'étape de paiement
+  };
+
+  // handleNextStep n'est plus utilisé directement pour la transition entre 2 et 3, ou 3 et 4
+  // Mais on le garde si on veut un bouton "Suivant" générique pour d'autres usages potentiels
+  // const handleNextStep = () => {
+  //   setCurrentStep(prev => Math.min(prev + 1, 4)); // Limiter à 4 étapes
+  // };
 
   const handleBackStep = () => {
     setCurrentStep(prev => Math.max(prev - 1, 1));
   };
 
-  // Animation fadeIn (optionnel, si non géré globalement)
   useEffect(() => {
     const style = document.createElement('style');
     style.innerHTML = `
@@ -197,18 +204,28 @@ const ShippingPage = () => {
   const renderCurrentStep = () => {
     switch (currentStep) {
       case 1:
-        // Passer initialData à PackageRegistration si on veut pré-remplir
         return <PackageRegistration onContinue={handlePackageSubmit} />;
       case 2:
         return (
           <RouteSelection
-            formData={formDataGlobal} // Utilise l'état global
-            setFormData={setFormDataGlobal} // Met à jour l'état global
-            onNext={handleNextStep}
+            formData={formDataGlobal}
+            setFormData={setFormDataGlobal}
+            onNext={handleRouteSelectionSubmit} // Utilise la nouvelle fonction
             onBack={handleBackStep}
           />
         );
-      case 3:
+      case 3: // Nouvelle étape : Signature
+        // Déterminer le nom du client/expéditeur. Pour l'instant, on utilise "Cher Client"
+        // Si vous avez le nom de l'expéditeur dans packageDataForParent ou formDataGlobal, utilisez-le.
+        const customerNameForSignature = "Cher Client"; // Exemple
+        return (
+          <DigitalSignature
+            onBack={handleBackStep}
+            onSubmit={handleSignatureSubmit} // Utilise la nouvelle fonction
+            customerName={customerNameForSignature}
+          />
+        );
+      case 4: // Étape décalée : Paiement
         if (!packageDataForParent) {
             console.warn("Données du colis manquantes pour l'étape de paiement. Retour à l'étape 1.");
             setCurrentStep(1);
@@ -219,16 +236,18 @@ const ShippingPage = () => {
             setCurrentStep(2);
             return <p className="text-center text-red-500">Sélection des points relais incomplète. Veuillez recommencer.</p>;
         }
+        if (!formDataGlobal.signatureData) { // Vérification de la signature
+            console.warn("Signature manquante pour l'étape de paiement. Retour à l'étape 3.");
+            setCurrentStep(3);
+            return <p className="text-center text-red-500">Signature manquante. Veuillez signer avant de procéder au paiement.</p>;
+        }
         return (
           <PaymentStep
             onBack={handleBackStep}
-            // onPaymentSuccess={handleNextStep} // Si vous avez une 4ème étape de confirmation/suivi
-            packageData={packageDataForParent} // Passer les données du colis
-            formData={formDataGlobal}      // Passer les données globales du formulaire
+            packageData={packageDataForParent}
+            formData={formDataGlobal}
           />
         );
-      // case 4: // Si vous ajoutez une étape de suivi
-      //   return ( /* Votre composant de suivi ici */ );
       default:
         return <PackageRegistration onContinue={handlePackageSubmit} />;
     }

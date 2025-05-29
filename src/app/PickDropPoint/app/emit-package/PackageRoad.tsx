@@ -4,7 +4,8 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   MapPin, User, ArrowRight, Search, Package, Building2,
   Store, Clock, ChevronRight, Menu, X, Home, Zap, List, Mail, Phone, LocateFixed, Navigation,
-  CheckCircle, CircleDot, // Pour les icônes de départ/arrivée
+  CheckCircle, CircleDot,
+  Target, // Pour les icônes de départ/arrivée
 } from 'lucide-react';
 
 import yaoundePointsRelaisData, {
@@ -397,7 +398,7 @@ const RoutePacket: React.FC<RouteSelectionProps> = ({ formData, setFormData, onN
             <button onClick={() => mapInstanceRef.current?.setView([initialFixedDeparturePoint.lat!, initialFixedDeparturePoint.lng!], USER_POSITION_ZOOM -1)}
               className="absolute bottom-4 right-4 z-10 bg-white p-2.5 rounded-full shadow-lg hover:bg-gray-100 transition-colors"
               title={`Centrer sur ${FIXED_DEPARTURE_POINT_NAME}`}>
-              <Home className="w-5 h-5 text-green-600" />
+              <Target className="w-6 h-6 text-blue-600" />
             </button>
           )}
         </main>
@@ -440,7 +441,7 @@ const RoutePacket: React.FC<RouteSelectionProps> = ({ formData, setFormData, onN
                   </div>
                 <div className="flex gap-3 pt-2">
                   <button type="button" onClick={onBack} className="form-button-secondary flex-1">Précédent</button>
-                  <button type="submit" disabled={!isRecipientFormValid} className="form-button-primary flex-1 disabled:opacity-60"> Suivant <ArrowRight size={16} className="ml-1" /> </button>
+                   <button type="submit" disabled={!isRecipientFormValid} className="form-button-primary flex-1 disabled:opacity-60"> Suivant <ArrowRight size={16} className="ml-1" /> </button>
                 </div>
               </form>
             )}

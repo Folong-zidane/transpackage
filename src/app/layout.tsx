@@ -26,19 +26,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     return () => clearTimeout(timer);
   }, []);
 
-  // Chargement lors des changements de route (optionnel)
-  useEffect(() => {
-    if (!isInitialLoad) {
-      // Chargement plus court pour les navigations internes
-      setIsLoading(true);
-      const timer = setTimeout(() => {
-        setIsLoading(false);
-      }, 800);
-
-      return () => clearTimeout(timer);
-    }
-  }, [pathname, isInitialLoad]);
-
   return (
     <html lang="fr" suppressHydrationWarning className={inter.className}>
       <head>

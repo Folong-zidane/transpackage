@@ -49,6 +49,7 @@ const Navbar: React.FC = () => {
     { href: '/point-de-relais', label: 'API', icon: Code2 },
     { href: '/achat', label: 'Tarifs', icon: HandCoins },
     { href: '/PickDropPoint/app', label: ' Mon Point Relais', icon: MapPinHouse },
+    { href: '/admin-dashboard', label: 'Paramètres', icon: Settings },
   ];
 
   // Fonction pour vérifier si un onglet est actif

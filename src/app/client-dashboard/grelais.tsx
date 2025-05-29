@@ -6,6 +6,7 @@ import {
   Check, Loader, Settings, X
 } from 'lucide-react';
 import GerantForm, { GerantFormData, Utilisateur as GerantUtilisateur } from './gerant';
+import Link from 'next/link';
 
 // Types (assuming PointRelais and Utilisateur interfaces are the same)
 interface PointRelais {
@@ -472,13 +473,14 @@ const Grelais: React.FC<GrelaisProps> = ({ utilisateur: initialUserProp }) => {
                   </div>
                   
                   <div className="flex space-x-2">
+                    <Link href='/point-de-relais-dashboard' >
                     <button 
                       className="flex-1 bg-teal-700 hover:bg-teal-800 text-white py-2 px-3 rounded-lg flex items-center justify-center transition-colors text-xs"
-                      onClick={() => openModal(point)}
                     >
                       <Settings className="mr-1 h-3 w-3" />
                       Config
                     </button>
+                    </Link>
                     <button 
                       className="bg-red-50 hover:bg-red-100 text-red-600 hover:text-red-700 py-2 px-3 rounded-lg transition-colors"
                       onClick={() => handleDelete(point.id)}
