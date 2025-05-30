@@ -13,8 +13,8 @@ import { PackageDelivery } from '../components/dashboard/package-delivery';
  * Métadonnées de la page pour le SEO
  */
 export const metadata: Metadata = {
-  title: 'Livraison des Colis | Point Relais',
-  description: 'Interface de livraison des colis',
+  title: 'Expedition des Colis | Point Relais',
+  description: 'Interface d expedition des colis',
 };
 
 /**
@@ -23,7 +23,7 @@ export const metadata: Metadata = {
 export default function LivraisonPage() {
   return (
     <div className="flex flex-col gap-4 p-4 md:p-8">
-      <DashboardHeader title="Livraison des Colis" />
+      <DashboardHeader title="Expédition des Colis" />
       <PackageDelivery />
     </div>
   );

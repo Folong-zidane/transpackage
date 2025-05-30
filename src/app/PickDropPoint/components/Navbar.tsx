@@ -13,7 +13,11 @@ import {
   CloudLightning,
   Menu,
   X,
-  Box, // Icône pour le logo
+  Box,
+  Settings,
+  Truck,
+  Send,
+  MapPinHouse, // Icône pour le logo
 } from 'lucide-react';
 
 interface NavItem {
@@ -24,10 +28,11 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   { href: '/PickDropPoint/app/home', label: 'Accueil', icon: Home },
-  { href: '/PickDropPoint/app/emit-package', label: 'Envoyer', icon: PackagePlus },
-  { href: '/point-de-relais-dashboard', label: 'Point Relais', icon: MapPin },
-  { href: '/PickDropPoint/app/receive-package', label: 'Recevoir', icon: PackageCheck },
-  { href: '/PickDropPoint/app/withdraw-package', label: 'Retirer', icon: PackageOpen },
+  { href: '/PickDropPoint/app/emit-package', label: 'Dépôt', icon: PackagePlus },
+  { href: '/PickDropPoint/app/expedier', label: 'Expedition', icon: Send },
+  { href: '/point-de-relais-dashboard', label: 'Statistiques', icon: Settings },
+  { href: '/PickDropPoint/app/receive-package', label: 'Reception', icon: Truck },
+  { href: '/PickDropPoint/app/withdraw-package', label: 'Retrait', icon: PackageOpen },
   { href: '/PickDropPoint/app/payment', label: 'Litiges', icon: CloudLightning },
 ];
 
@@ -64,7 +69,7 @@ export default function Navbar() {
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link href="/PickDropPoint/app/home" className="flex items-center space-x-2 group">
-            <Box className={`h-8 w-8 transition-colors duration-300 ${isScrolled || isOpen ? 'text-green-600' : 'text-gray-700 group-hover:text-green-600'}`} />
+            <MapPinHouse className={`h-8 w-8 transition-colors duration-300 ${isScrolled || isOpen ? 'text-green-600' : 'text-gray-700 group-hover:text-green-600'}`} />
             <span
               className={`text-3xl font-bold transition-colors duration-300 
                          ${isScrolled || isOpen ? 'text-green-700' : 'text-gray-800 group-hover:text-green-700'}`}

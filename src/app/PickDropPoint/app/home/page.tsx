@@ -1,5 +1,5 @@
 'use client';
-import { Package, PackagePlus, MapPin, PackageCheck, PackageOpen, CreditCard, CheckCircle, BarChart3, Bell, ShieldCheck, Search, Compass, FastForward, HandCoins, CloudLightning, MapPinHouse, Settings } from 'lucide-react'; // Ajout des icônes nécessaires
+import { Package, PackagePlus, MapPin, PackageCheck, PackageOpen, CreditCard, CheckCircle, BarChart3, Bell, ShieldCheck, Search, Compass, FastForward, HandCoins, CloudLightning, MapPinHouse, Settings, Send, Truck } from 'lucide-react'; // Ajout des icônes nécessaires
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 
@@ -12,10 +12,31 @@ export default function HomePage() {
 
   const services = [
     {
-      title: "Dépôt et/ou envoi de colis",
+      title: "Dépôt de colis",
       description: "Enregistrez un colis à expédier via l'application",
       href: "/PickDropPoint/app/emit-package",
       icon: <PackagePlus className="h-8 w-8 text-white" />, // Lucide Icon
+      color: "from-green-400 to-green-500"
+    },
+    {
+      title: "Expédition de colis",
+      description: "Expédier des colis via l'application",
+      href: "/PickDropPoint/app/expedier",
+      icon: <Send className="h-8 w-8 text-white" />, // Lucide Icon
+      color: "from-green-400 to-green-500"
+    },
+    {
+      title: "Reception de colis",
+      description: "Confirmez la réception d'un colis",
+      href: "/PickDropPoint/app/receive-package",
+      icon: <Truck className="h-8 w-8 text-white" />, // Lucide Icon
+      color: "from-green-400 to-green-500"
+    },
+    {
+      title: "Retrait de colis",
+      description: "Enregistrez le retrait d'un colis",
+      href: "/PickDropPoint/app/withdraw-package",
+      icon: <PackageCheck className="h-8 w-8 text-white" />, // Lucide Icon
       color: "from-green-400 to-green-500"
     },
     {
@@ -26,23 +47,9 @@ export default function HomePage() {
       color: "from-green-400 to-green-500"
     },
     {
-      title: "Reception de colis",
-      description: "Confirmez la réception d'un colis",
-      href: "/PickDropPoint/app/receive-package",
-      icon: <PackageCheck className="h-8 w-8 text-white" />, // Lucide Icon
-      color: "from-green-400 to-green-500"
-    },
-    {
-      title: "Retrait de colis",
-      description: "Enregistrez le retrait d'un colis",
-      href: "/PickDropPoint/app/withdraw-package",
-      icon: <PackageOpen className="h-8 w-8 text-white" />, // Lucide Icon
-      color: "from-green-400 to-green-500"
-    },
-    {
       title: "Conflits et réclamations",
       description: "Voir mon gerant de point relais pour un souci",
-      href: "/PickDropPoint/app/payment",
+      href: "/PickDropPoint/app/reclammation",
       icon: <CloudLightning className="h-8 w-8 text-white" />, // Lucide Icon
       color: "from-green-400 to-green-500"
     }
