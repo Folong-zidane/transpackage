@@ -1,0 +1,348 @@
+
+
+import { StyleSheet,Button, Text, View } from "react-native";
+import { ScrollView, StatusBar, TouchableOpacity, Image } from 'react-native';
+
+export default function TestScreen() {
+  return (
+    <View style={styles.container}>
+        
+      <View style={styles.main}>
+        <Text style={styles.title}>Hello World (Test)</Text>
+        <Text style={styles.subtitle}>This is the first page for test your app.</Text>
+        <View style={styles.buttonContainer}>
+            <Button title="Test" onPress={() => console.log('Test est cliqué')} />
+        </View>
+
+      </View>
+    </View>
+  );
+} 
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    alignItems: "center",
+    padding: 24,
+  },
+  main: {
+    flex: 1,
+    justifyContent: "center",
+    maxWidth: 960,
+    marginHorizontal: "auto",
+  },
+  title: {
+    fontSize: 50,
+    fontWeight: "bold",
+  },
+  subtitle: {
+    fontSize: 36,
+    color: "#38434D",
+  },
+  buttonContainer: {
+    alignSelf: 'center',
+    width: '50%',
+    color: '#555',
+    fontWeight: 'bold',
+    margin: 10,
+    backgroundColor: 'orange',
+    padding: 15,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// le code du context notification qui est dans le dossier d'origine est le suivant :
+
+import type React from "react"
+import { createContext, useState, useContext, useEffect } from "react"
+import AsyncStorage from "@react-native-async-storage/async-storage"
+import { usePackages } from "./PackageContext"
+
+export interface Notification {
+  id: string
+  title: string
+  message: string
+  type: "info" | "success" | "warning" | "error"
+  read: boolean
+  createdAt: Date
+  packageId?: string
+  relayPointId?: string
+}
+
+interface NotificationContextType {
+  notifications: Notification[]
+  unreadCount: number
+  addNotification: (notification: Omit<Notification, "id" | "read" | "createdAt">) => void
+  markAsRead: (id: string) => void
+  markAllAsRead: () => void
+  clearNotifications: () => void
+}
+
+const NotificationContext = createContext<NotificationContextType | undefined>(undefined)
+
+export const useNotifications = () => {
+  const context = useContext(NotificationContext)
+  if (!context) {
+    throw new Error("useNotifications must be used within a NotificationProvider")
+  }
+  return context
+}
+
+export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [notifications, setNotifications] = useState<Notification[]>([])
+  const { packages } = usePackages()
+
+  // Charger les notifications depuis le stockage local au démarrage
+  useEffect(() => {
+    const loadNotifications = async () => {
+      try {
+        const storedNotifications = await AsyncStorage.getItem("notifications")
+        if (storedNotifications) {
+          const parsedNotifications = JSON.parse(storedNotifications)
+          // Convertir les chaînes de date en objets Date
+          const formattedNotifications = parsedNotifications.map((notif: any) => ({
+            ...notif,
+            createdAt: new Date(notif.createdAt),
+          }))
+          setNotifications(formattedNotifications)
+        }
+      } catch (error) {
+        console.error("Failed to load notifications", error)
+      }
+    }
+
+    loadNotifications()
+  }, [])
+
+  // Surveiller les changements de statut des colis pour créer des notifications
+  useEffect(() => {
+    // Cette logique serait normalement gérée par un backend avec des webhooks ou des push notifications
+    // Ici, nous simulons ce comportement pour la démonstration
+  }, [packages])
+
+  // Sauvegarder les notifications dans le stockage local à chaque changement
+  useEffect(() => {
+    const saveNotifications = async () => {
+      try {
+        await AsyncStorage.setItem("notifications", JSON.stringify(notifications))
+      } catch (error) {
+        console.error("Failed to save notifications", error)
+      }
+    }
+
+    if (notifications.length > 0) {
+      saveNotifications()
+    }
+  }, [notifications])
+
+  const addNotification = (notificationData: Omit<Notification, "id" | "read" | "createdAt">) => {
+    const newNotification: Notification = {
+      ...notificationData,
+      id: Math.random().toString(36).substring(2, 9),
+      read: false,
+      createdAt: new Date(),
+    }
+
+    setNotifications((prev) => [newNotification, ...prev])
+
+    // Dans une vraie application, vous enverriez une notification push ici
+    console.log("Nouvelle notification:", newNotification.title)
+  }
+
+  const markAsRead = (id: string) => {
+    setNotifications((prev) =>
+      prev.map((notification) => (notification.id === id ? { ...notification, read: true } : notification)),
+    )
+  }
+
+  const markAllAsRead = () => {
+    setNotifications((prev) => prev.map((notification) => ({ ...notification, read: true })))
+  }
+
+  const clearNotifications = () => {
+    setNotifications([])
+    AsyncStorage.removeItem("notifications")
+  }
+
+  const unreadCount = notifications.filter((notification) => !notification.read).length
+
+  return (
+    <NotificationContext.Provider
+      value={{
+        notifications,
+        unreadCount,
+        addNotification,
+        markAsRead,
+        markAllAsRead,
+        clearNotifications,
+      }}
+    >
+      {children}
+    </NotificationContext.Provider>
+  )
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Créer une application mobile intuitive et fluide avec React Native Expo pour la gestion des colis nécessite une bonne structure, une expérience utilisateur pensée, et une architecture propre. Voici un guide étape par étape pour concevoir cette application, en abordant chaque fonctionnalité que tu as listée :
+
+---
+
+### 🔧 Outils nécessaires
+
+* React Native (via Expo)
+* TypeScript (optionnel mais recommandé)
+* React Navigation
+* React Native Maps
+* Firebase ou Supabase pour backend
+* Zustand ou Redux pour gestion d’état
+* Tailwind CSS via NativeWind ou StyleSheet
+* Lottie ou React Native Animatable pour les animations fluides
+
+---
+
+## 🧱 Structure générale de l’app
+
+### 1. Authentification (client simple ou agence)
+
+* Choix du rôle à la connexion (client simple ou agence)
+* Auth via e-mail/password ou OTP
+
+### 2. Navigation
+
+* TabNavigator (Accueil, Envoyer, Réception, Carte, Profil)
+* StackNavigator pour les détails
+
+---
+
+## 🎯 Fonctionnalités principales
+
+### 📍 Afficher les points relais
+
+* Carte avec markers via react-native-maps
+* Liste des points avec infos essentielles (nom, disponibilité, horaires)
+* Bouton "Voir sur la carte" → navigue vers une map centrée
+
+```tsx
+<Button title="Voir sur la carte" onPress={() => navigation.navigate("Carte", { idPointRelais })} />
+```
+
+### 💡 UX Design : Couleurs
+
+* Couleurs chaudes pour les actions (orange/rouge pour "envoyer")
+* Couleurs calmes (bleu/vert) pour la réception
+* Couleurs désaturées pour les points relais désactivés
+* Icônes explicites (📦 pour colis, ⏰ pour horaires, 📍 pour localisation)
+
+---
+
+### 📋 Détail d’un point relais (Profil)
+
+Contenu :
+
+* Nom
+* Adresse
+* Horaires d’ouverture
+* Carte (mini-map)
+* Image du lieu
+* Statistiques (nb de colis traités)
+* Bouton pour changer de point relais si désactivé
+
+---
+
+### 🔄 Deux types d’utilisateurs
+
+* Client :
+
+  * Envoie/reçoit des colis
+  * Choisit point relais
+* Agence :
+
+  * Crée/active/désactive des points relais
+  * Accède aux statistiques
+
+---
+
+### 📦 Gestion des colis
+
+* Formulaire : poids, volume, description
+* À l’envoi → générer un identifiant unique (UUID ou basé sur timestamp + user ID)
+
+```ts
+import { v4 as uuidv4 } from 'uuid'
+const colisId = uuidv4()
+```
+
+* Associer le colis au client et au point relais
+
+---
+
+## 🎛️ Interface fluide
+
+* Utiliser FlatList avec optimisations
+* Skeleton loaders pendant le chargement
+* Transitions animées entre les vues
+* Retours haptiques sur les boutons
+
+---
+
+## ✅ Résumé des composants React à créer
+
+* HomeScreen
+* LoginScreen
+* ChoixRôleScreen
+* EnvoyerColisScreen
+* RecevoirColisScreen
+* CarteScreen (avec react-native-maps)
+* PointRelaisDetailsScreen
+* ProfilUtilisateurScreen
+* AgenceDashboardScreen (si agence)
+
+
+
+Souhaites-tu que je te génère une base de projet Expo + quelques écrans pour démarrer rapidement ?
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
