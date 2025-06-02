@@ -56,6 +56,15 @@ const SendPackageScreen = () => {
   const [basePrice, setBasePrice] = useState(0)
   const [deliveryPrice, setDeliveryPrice] = useState(0)
   const [totalPrice, setTotalPrice] = useState(0)
+  
+  // Liste des livreurs disponibles
+  const [availableDeliverers, setAvailableDeliverers] = useState([
+    { id: "d1", name: "Express Delivery", percentage: 60 },
+    { id: "d2", name: "Rapid Transit", percentage: 50 },
+    { id: "d3", name: "Safe Hands", percentage: 45 },
+    { id: "d4", name: "Quick Move", percentage: 55 }
+  ])
+  const [selectedDeliverer, setSelectedDeliverer] = useState(null)
 
   const [showModal, setShowModal] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState('');
@@ -64,7 +73,6 @@ const SendPackageScreen = () => {
     expiry: '',
     cvv: '',
   });
-
 
   // Global a la page
   const activeRelayPoints = getActiveRelayPoints()
@@ -84,18 +92,29 @@ const SendPackageScreen = () => {
   useEffect(() => {
     if (weight && volume) {
       let price = parseFloat(weight) * 2 + parseFloat(volume) * 1000 // Base de calcul
-      
+
       // Majoration selon les caractéristiques
       if (characteristics.fragile) price *= 1.2
       if (characteristics.liquid) price *= 1.3
       if (characteristics.dangerous) price *= 1.5
       if (characteristics.valuable) price *= 1.4
-      
+
       setBasePrice(Math.round(price))
-      setDeliveryPrice(needDelivery ? Math.round(price * 0.5) : 0)
-      setTotalPrice(Math.round(price + (needDelivery ? price * 0.5 : 0)))
+
+      // Calcul du prix de livraison en fonction du livreur sélectionné
+      if (needDelivery && selectedDeliverer) {
+        setDeliveryPrice(Math.round(price * selectedDeliverer.percentage / 100))
+        setTotalPrice(Math.round(price + (price * selectedDeliverer.percentage / 100)))
+      } else if (needDelivery) {
+        // Prix par défaut si aucun livreur n'est sélectionné
+        setDeliveryPrice(Math.round(price * 0.5))
+        setTotalPrice(Math.round(price + (price * 0.5)))
+      } else {
+        setDeliveryPrice(0)
+        setTotalPrice(Math.round(price))
+      }
     }
-  }, [weight, volume, characteristics, needDelivery])
+  }, [weight, volume, characteristics, needDelivery, selectedDeliverer])
 
   // Ouvrir modal quand le paiement change
   useEffect(() => {
@@ -116,6 +135,10 @@ const SendPackageScreen = () => {
                 receiverInfo.name && receiverInfo.firstName && receiverInfo.email && receiverInfo.phone &&
                 selectedRelayPoint)
       case 2: // Paiement
+        // Si livraison à domicile est sélectionnée, un livreur doit être choisi
+        if (needDelivery) {
+          return paymentMethod && selectedDeliverer
+        }
         return paymentMethod
       case 3: // Confirmation
         return true
@@ -156,7 +179,7 @@ const SendPackageScreen = () => {
   const openImageLibrary = async () => {
     try {
       const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync()
-      
+
       if (!permissionResult.granted) {
         Alert.alert('Permission refusée', 'Permission d\'accès à la galerie requise')
         return
@@ -180,7 +203,7 @@ const SendPackageScreen = () => {
   const openCamera = async () => {
     try {
       const permissionResult = await ImagePicker.requestCameraPermissionsAsync()
-      
+
       if (!permissionResult.granted) {
         Alert.alert('Permission refusée', 'Permission d\'accès à la caméra requise')
         return
@@ -201,51 +224,7 @@ const SendPackageScreen = () => {
     }
   }
 
-  {/** Fonction de validation des informations entrées par l'utilisateur 
-
-     const validateForm = () => {
-    if (!weight || isNaN(Number(weight)) || Number(weight) <= 0) {
-      return { valid: false, message: "Veuillez entrer un poids valide" }
-    }
-
-    if (!volume || isNaN(Number(volume)) || Number(volume) <= 0) {
-      return { valid: false, message: "Veuillez entrer un volume valide" }
-    }
-
-    if (!description.trim()) {
-      return { valid: false, message: "Veuillez entrer une description" }
-    }
-
-    if (!receiverEmail.trim() || !receiverEmail.includes("@")) {
-      return { valid: false, message: "Veuillez entrer une adresse email valide" }
-    }
-
-    if (!selectedRelayPoint) {
-      return { valid: false, message: "Veuillez sélectionner un point relais" }
-    }
-
-    return { valid: true }
-  }
-    
-  */}
-
   const handleSubmit = async () => {
-    {/** Validation des informations entrées par l'utilisateur 
-
-      const validation = validateForm()
-      
-          if (!validation.valid) {
-            Alert.alert("Erreur", validation.message)
-            return
-          }
-      
-          if (!user) {
-            Alert.alert("Erreur", "Vous devez être connecté pour envoyer un colis")
-            return
-          }
-
-       */}
-
     setLoading(true)
     try {
       const newPackage = await addPackage({
@@ -262,12 +241,15 @@ const SendPackageScreen = () => {
         relayPointId: selectedRelayPoint,
         paymentMethod,
         needDelivery,
+        delivererId: selectedDeliverer?.id,
+        delivererName: selectedDeliverer?.name,
+        delivererPercentage: selectedDeliverer?.percentage,
         totalPrice,
         status: "pending",
         senderId: user.id,
       })
 
-     setLoading(false)
+      setLoading(false)
       Alert.alert("Succès", `Votre colis a été enregistré avec le numéro de suivi ${newPackage.trackingNumber}`, [
         {
           text: "Voir les détails",
@@ -275,7 +257,7 @@ const SendPackageScreen = () => {
         },
         {
           text: "OK",
-          onPress: () => navigation.navigate("MesColis"), 
+          onPress: () => navigation.navigate("MesColis"),
         },
       ])
     } catch (error) {
@@ -292,7 +274,7 @@ const SendPackageScreen = () => {
         return (
           <Animatable.View animation="fadeInRight" duration={500}>
             <Text style={styles.stepTitle}>Informations du colis</Text>
-            
+
             <TextInput
               label="Poids (kg)"
               value={weight}
@@ -330,7 +312,7 @@ const SendPackageScreen = () => {
                 style={styles.dimensionInput}
               />
             </View>
-            
+
             <Text style={styles.volumeText}>Volume calculé: {volume} m³</Text>
 
             <TextInput
@@ -349,28 +331,28 @@ const SendPackageScreen = () => {
               <View style={styles.checkboxRow}>
                 <Checkbox
                   status={characteristics.fragile ? 'checked' : 'unchecked'}
-                  onPress={() => setCharacteristics({...characteristics, fragile: !characteristics.fragile})}
+                  onPress={() => setCharacteristics({ ...characteristics, fragile: !characteristics.fragile })}
                 />
                 <Text style={styles.checkboxLabel}>Fragile</Text>
               </View>
               <View style={styles.checkboxRow}>
                 <Checkbox
                   status={characteristics.liquid ? 'checked' : 'unchecked'}
-                  onPress={() => setCharacteristics({...characteristics, liquid: !characteristics.liquid})}
+                  onPress={() => setCharacteristics({ ...characteristics, liquid: !characteristics.liquid })}
                 />
                 <Text style={styles.checkboxLabel}>Liquide</Text>
               </View>
               <View style={styles.checkboxRow}>
                 <Checkbox
                   status={characteristics.dangerous ? 'checked' : 'unchecked'}
-                  onPress={() => setCharacteristics({...characteristics, dangerous: !characteristics.dangerous})}
+                  onPress={() => setCharacteristics({ ...characteristics, dangerous: !characteristics.dangerous })}
                 />
                 <Text style={styles.checkboxLabel}>Dangereux</Text>
               </View>
               <View style={styles.checkboxRow}>
                 <Checkbox
                   status={characteristics.valuable ? 'checked' : 'unchecked'}
-                  onPress={() => setCharacteristics({...characteristics, valuable: !characteristics.valuable})}
+                  onPress={() => setCharacteristics({ ...characteristics, valuable: !characteristics.valuable })}
                 />
                 <Text style={styles.checkboxLabel}>Précieux</Text>
               </View>
@@ -397,29 +379,28 @@ const SendPackageScreen = () => {
         return (
           <Animatable.View animation="fadeInRight" duration={500}>
             <Text style={styles.stepTitle}>Informations des acteurs</Text>
-             
+
             <Card style={styles.actorCard}>
               <Card.Content>
-              <Title>Expéditeur (Point relais)</Title>
-              {/** <Title>Expéditeur({user?.firstName})</Title> */}
+                <Title>Expéditeur (Point relais)</Title>
                 <TextInput
                   label="Nom"
                   value={senderInfo.name}
-                  onChangeText={(text) => setSenderInfo({...senderInfo, name: text})}
+                  onChangeText={(text) => setSenderInfo({ ...senderInfo, name: text })}
                   mode="outlined"
                   style={styles.input}
                 />
                 <TextInput
                   label="Prénom"
                   value={senderInfo.firstName}
-                  onChangeText={(text) => setSenderInfo({...senderInfo, firstName: text})}
+                  onChangeText={(text) => setSenderInfo({ ...senderInfo, firstName: text })}
                   mode="outlined"
                   style={styles.input}
                 />
                 <TextInput
                   label="Adresse"
                   value={senderInfo.address}
-                  onChangeText={(text) => setSenderInfo({...senderInfo, address: text})}
+                  onChangeText={(text) => setSenderInfo({ ...senderInfo, address: text })}
                   mode="outlined"
                   style={styles.input}
                   multiline
@@ -427,7 +408,7 @@ const SendPackageScreen = () => {
                 <TextInput
                   label="Téléphone"
                   value={senderInfo.phone}
-                  onChangeText={(text) => setSenderInfo({...senderInfo, phone: text})}
+                  onChangeText={(text) => setSenderInfo({ ...senderInfo, phone: text })}
                   mode="outlined"
                   style={styles.input}
                   keyboardType="phone-pad"
@@ -441,21 +422,21 @@ const SendPackageScreen = () => {
                 <TextInput
                   label="Nom"
                   value={receiverInfo.name}
-                  onChangeText={(text) => setReceiverInfo({...receiverInfo, name: text})}
+                  onChangeText={(text) => setReceiverInfo({ ...receiverInfo, name: text })}
                   mode="outlined"
                   style={styles.input}
                 />
                 <TextInput
                   label="Prénom"
                   value={receiverInfo.firstName}
-                  onChangeText={(text) => setReceiverInfo({...receiverInfo, firstName: text})}
+                  onChangeText={(text) => setReceiverInfo({ ...receiverInfo, firstName: text })}
                   mode="outlined"
                   style={styles.input}
                 />
                 <TextInput
                   label="Email"
                   value={receiverInfo.email}
-                  onChangeText={(text) => setReceiverInfo({...receiverInfo, email: text})}
+                  onChangeText={(text) => setReceiverInfo({ ...receiverInfo, email: text })}
                   mode="outlined"
                   style={styles.input}
                   keyboardType="email-address"
@@ -463,7 +444,7 @@ const SendPackageScreen = () => {
                 <TextInput
                   label="Téléphone"
                   value={receiverInfo.phone}
-                  onChangeText={(text) => setReceiverInfo({...receiverInfo, phone: text})}
+                  onChangeText={(text) => setReceiverInfo({ ...receiverInfo, phone: text })}
                   mode="outlined"
                   style={styles.input}
                   keyboardType="phone-pad"
@@ -491,7 +472,7 @@ const SendPackageScreen = () => {
         return (
           <Animatable.View animation="fadeInRight" duration={500}>
             <Text style={styles.stepTitle}>Paiement</Text>
-            
+
             <Card style={styles.priceCard}>
               <Card.Content>
                 <Title>Tarification</Title>
@@ -516,13 +497,47 @@ const SendPackageScreen = () => {
             <View style={styles.deliveryOption}>
               <Checkbox
                 status={needDelivery ? 'checked' : 'unchecked'}
-                onPress={() => setNeedDelivery(!needDelivery)}
+                onPress={() => {
+                  const newValue = !needDelivery;
+                  setNeedDelivery(newValue);
+                  if (!newValue) {
+                    setSelectedDeliverer(null);
+                  }
+                }}
               />
               <View style={styles.deliveryContainer}>
                 <Text style={styles.deliveryLabel}>Un livreur sera envoyé à domicile</Text>
-                <Text style={styles.deliveryLabel}>(+50% du prix de base)</Text>
+                <Text style={styles.deliveryLabel}>(prix selon le livreur choisi)</Text>
               </View>
             </View>
+
+            {needDelivery && (
+              <View style={styles.deliverersSection}>
+                <Text style={styles.sectionLabel}>Choisissez un livreur</Text>
+                {availableDeliverers.map((deliverer) => (
+                  <TouchableOpacity
+                    key={deliverer.id}
+                    style={[styles.delivererCard, selectedDeliverer?.id === deliverer.id && styles.selectedDelivererCard]}
+                    onPress={() => setSelectedDeliverer(deliverer)}
+                  >
+                    <View style={styles.delivererInfo}>
+                      <Text style={styles.delivererName}>{deliverer.name}</Text>
+                      <View style={styles.delivererDetails}>
+                        <Text style={styles.delivererPercentage}>+{deliverer.percentage}% du prix de base</Text>
+                      </View>
+                    </View>
+                    <RadioButton
+                      value={deliverer.id}
+                      status={selectedDeliverer?.id === deliverer.id ? 'checked' : 'unchecked'}
+                      onPress={() => setSelectedDeliverer(deliverer)}
+                    />
+                  </TouchableOpacity>
+                ))}
+                {!selectedDeliverer && needDelivery && (
+                  <HelperText type="error">Veuillez sélectionner un livreur</HelperText>
+                )}
+              </View>
+            )}
 
             <Text style={styles.sectionLabel}>Mode de paiement</Text>
             <RadioButton.Group onValueChange={setPaymentMethod} value={paymentMethod}>
@@ -543,7 +558,7 @@ const SendPackageScreen = () => {
                 <Text style={styles.radioLabel}>Espèces (payé à la livraison)</Text>
               </View>
             </RadioButton.Group>
-      
+
             {/* MODAL */}
             <Modal visible={showModal} animationType="slide" transparent={true}>
               <View style={styles.modalBackground}>
@@ -560,7 +575,7 @@ const SendPackageScreen = () => {
                       />
                     </>
                   )}
-      
+
                   {paymentMethod === 'card' && (
                     <>
                       <Text style={styles.modalTitle}>Informations de carte bancaire</Text>
@@ -587,7 +602,7 @@ const SendPackageScreen = () => {
                       />
                     </>
                   )}
-      
+
                   <Button mode="contained" onPress={() => setShowModal(false)}>Valider</Button>
                 </View>
               </View>
@@ -599,33 +614,40 @@ const SendPackageScreen = () => {
         return (
           <Animatable.View animation="fadeInRight" duration={500}>
             <Text style={styles.stepTitle}>Confirmation</Text>
-            
+
             <Card style={styles.summaryCard}>
               <Card.Content>
                 <Title>Résumé de votre Dépôt</Title>
-                
+
                 <Text style={styles.summaryLabel}>Colis:</Text>
                 <Text>• Poids: {weight} kg</Text>
                 <Text>• Dimensions: {length}×{width}×{height} cm</Text>
                 <Text>• Volume: {volume} m³</Text>
                 <Text>• Description: {description}</Text>
-                
+
                 <Text style={styles.summaryLabel}>Expéditeur (Point relais):</Text>
                 <Text>Nom: {senderInfo.firstName} {senderInfo.name}</Text>
                 <Text>Numéro de téléphone: {senderInfo.phone}</Text>
-                
+
                 <Text style={styles.summaryLabel}>Destinataire (Client):</Text>
                 <Text>Nom: {receiverInfo.firstName} {receiverInfo.name}</Text>
                 <Text>Numéro de téléphone: {receiverInfo.phone}</Text>
                 <Text>Email: {receiverInfo.email}</Text>
-                
+
                 <Text style={styles.summaryLabel}>Point relais Pick&Drop sélectionné:</Text>
                 <Text>{activeRelayPoints.find(p => p.id === selectedRelayPoint)?.name}</Text>
-                
+
                 <Text style={styles.summaryLabel}>Paiement:</Text>
                 <Text>Mode: {paymentMethod}</Text>
                 <Text>Total: {totalPrice} FCFA</Text>
-                {needDelivery && <Text>Avec livraison à domicile</Text>}
+                {needDelivery && (
+                  <>
+                    <Text>Avec livraison à domicile</Text>
+                    {selectedDeliverer && (
+                      <Text>Livreur: {selectedDeliverer.name} (+{selectedDeliverer.percentage}%)</Text>
+                    )}
+                  </>
+                )}
               </Card.Content>
             </Card>
           </Animatable.View>
@@ -640,12 +662,12 @@ const SendPackageScreen = () => {
     <ScrollView style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>Déposer un colis</Text>
-        
+
         {/* Barre de progression */}
         <View style={styles.progressContainer}>
-          <ProgressBar 
-            progress={(currentStep + 1) / 4} 
-            color="#FF6B00" 
+          <ProgressBar
+            progress={(currentStep + 1) / 4}
+            color="#FF6B00"
             style={styles.progressBar}
           />
           <Text style={styles.progressText}>
@@ -719,6 +741,41 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#f5f5f5",
+  },
+  deliverersSection: {
+    marginTop: 15,
+    marginBottom: 15,
+  },
+  delivererCard: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+  },
+  selectedDelivererCard: {
+    borderColor: '#FF6B00',
+    backgroundColor: '#FFF8F2',
+  },
+  delivererInfo: {
+    flex: 1,
+  },
+  delivererName: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 4,
+  },
+  delivererDetails: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  delivererPercentage: {
+    color: '#FF6B00',
+    fontWeight: 'bold',
   },
   header: {
     backgroundColor: "#fff",
