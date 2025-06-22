@@ -42,10 +42,6 @@
 		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-security</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-validation</artifactId>
 		</dependency>
 		<dependency>
@@ -87,6 +83,20 @@
 			<artifactId>twilio</artifactId>
 			<version>9.9.1</version>
 		</dependency>
+
+		<!-- Dépendance principale de ZXing pour la logique de base -->
+        <dependency>
+            <groupId>com.google.zxing</groupId>
+            <artifactId>core</artifactId>
+            <version>3.5.3</version>
+        </dependency>
+
+        <!-- Dépendance pour les fonctionnalités Java SE (comme MatrixToImageWriter) -->
+        <dependency>
+            <groupId>com.google.zxing</groupId>
+            <artifactId>javase</artifactId>
+            <version>3.5.3</version>
+        </dependency>
 	</dependencies>
 
 	<build>

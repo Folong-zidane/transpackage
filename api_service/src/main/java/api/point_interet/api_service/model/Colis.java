@@ -1,120 +1,95 @@
 package api.point_interet.api_service.model;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
 import java.time.LocalDateTime;
+import java.util.UUID;
+
 
 @Entity
-@Table(name = "colis")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class Colis {
-    
+
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
 
-    @Column(nullable = false)
-    private String reference;
+    @ManyToOne(optional = false)
+    @NotNull(message = "L'expéditeur ne peut pas être nul")
+    private Client sender;
 
-    @Column(name = "code_qr", nullable = false)
-    private String codeQR;
+    @ManyToOne(optional = false)
+    @NotNull(message = "Le destinataire ne peut pas être nul")
+    private Client recipient;
 
-    @ManyToOne
-    @JoinColumn(name = "point_relais_id")
+    @NotNull
+    @ManyToOne(optional = false)
     private PointRelais pointRelais;
 
-    @Column(name = "client_id", nullable = false)
-    private String clientId;
+    @NotBlank(message = "La description ne peut pas être vide")
+    private String description;
+
+    @NotNull(message = "Le poids ne peut pas être nul")
+    @Positive(message = "Le poids doit être positif")
+    private Double weight;
+
+    private Double dimensions;
+
+    @Enumerated(EnumType.STRING)
+    private ColisStatus status = ColisStatus.EN_ATTENTE;
 
     @Column(name = "date_depot")
-    private LocalDateTime dateDepot;
+    private LocalDateTime dateDepot = LocalDateTime.now();
 
     @Column(name = "date_retrait")
     private LocalDateTime dateRetrait;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private StatutColis statut;
+    private LocalDateTime lastUpdateDate;
 
-    // Constructeurs
-    public Colis() {
+    private String qrCodePath;
+
+    public enum ColisStatus {
+        RECU("Colis reçu par au point de livraison"),
+        EN_ATTENTE("En attente"),
+        EN_TRANSIT("En transit"),
+        LIVRE("Livré"),
+        RETIRE("Colis Retiré");
+
+        private final String displayName;
+
+        ColisStatus(String displayName) {
+            this.displayName = displayName;
+        }
+
+        public String getDisplayName() {
+            return displayName;
+        }
     }
 
-    // Getters et Setters
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public String getReference() {
-        return reference;
-    }
-
-    public void setReference(String reference) {
-        this.reference = reference;
-    }
-
-    public String getCodeQR() {
-        return codeQR;
-    }
-
-    public void setCodeQR(String codeQR) {
-        this.codeQR = codeQR;
-    }
-
-    public PointRelais getPointRelais() {
-        return pointRelais;
-    }
-
-    public void setPointRelais(PointRelais pointRelais) {
-        this.pointRelais = pointRelais;
-    }
-
-    public String getClientId() {
-        return clientId;
-    }
-
-    public void setClientId(String clientId) {
-        this.clientId = clientId;
-    }
-
-    public LocalDateTime getDateDepot() {
-        return dateDepot;
-    }
-
-    public void setDateDepot(LocalDateTime dateDepot) {
-        this.dateDepot = dateDepot;
-    }
-
-    public LocalDateTime getDateRetrait() {
-        return dateRetrait;
-    }
-
-    public void setDateRetrait(LocalDateTime dateRetrait) {
-        this.dateRetrait = dateRetrait;
-    }
-
-    public StatutColis getStatut() {
-        return statut;
-    }
-
-    public void setStatut(StatutColis statut) {
-        this.statut = statut;
-    }
 
     // Méthodes métier
-    public boolean verifierCodeQR(String codeQR) {
-        return this.codeQR.equals(codeQR);
+    public void marquerCommeRecu() {
+        this.status = ColisStatus.RECU;
+        this.dateDepot = LocalDateTime.now();
+        this.lastUpdateDate = LocalDateTime.now();
     }
 
-    public void marquerCommeRecu() {
-        this.dateDepot = LocalDateTime.now();
-        this.statut = StatutColis.RECU;
+    public boolean verifierCodeQR(String qrCodePath) {
+        return this.qrCodePath.equals(qrCodePath);
     }
+
 
     public void marquerCommeRetire() {
         this.dateRetrait = LocalDateTime.now();
-        this.statut = StatutColis.RETIRE;
+        this.status = ColisStatus.RETIRE;
     }
-} 
+
+}

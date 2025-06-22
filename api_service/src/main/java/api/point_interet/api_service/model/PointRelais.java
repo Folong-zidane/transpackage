@@ -1,10 +1,17 @@
 package api.point_interet.api_service.model;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
 import java.util.List;
 import java.util.ArrayList;
 
+@Data
 @Entity
+@AllArgsConstructor
+@NoArgsConstructor
 @Table(name = "points_relais")
 public class PointRelais {
     
@@ -22,7 +29,7 @@ public class PointRelais {
     private Adresse adresse;
 
     @ManyToOne
-    @JoinColumn(name = "proprietaire_id", nullable = false)
+    @JoinColumn(name = "proprietaire_id")
     private Proprietaire proprietaire;
 
     @Column(nullable = false)
@@ -43,98 +50,6 @@ public class PointRelais {
     @OneToMany(mappedBy = "pointRelais", cascade = CascadeType.ALL)
     private List<Colis> colis = new ArrayList<>();
 
-    // Constructeur par défaut
-    public PointRelais() {
-    }
-
-    // Getters et Setters
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public String getNom() {
-        return nom;
-    }
-
-    public void setNom(String nom) {
-        this.nom = nom;
-    }
-
-    public Coordonnees getCoordonnees() {
-        return coordonnees;
-    }
-
-    public void setCoordonnees(Coordonnees coordonnees) {
-        this.coordonnees = coordonnees;
-    }
-
-    public Adresse getAdresse() {
-        return adresse;
-    }
-
-    public void setAdresse(Adresse adresse) {
-        this.adresse = adresse;
-    }
-
-    public Proprietaire getProprietaire() {
-        return proprietaire;
-    }
-
-    public void setProprietaire(Proprietaire proprietaire) {
-        this.proprietaire = proprietaire;
-    }
-
-    public Integer getCapaciteMaximale() {
-        return capaciteMaximale;
-    }
-
-    public void setCapaciteMaximale(Integer capaciteMaximale) {
-        this.capaciteMaximale = capaciteMaximale;
-    }
-
-    public String getHorairesOuverture() {
-        return horairesOuverture;
-    }
-
-    public void setHorairesOuverture(String horairesOuverture) {
-        this.horairesOuverture = horairesOuverture;
-    }
-
-    public Integer getStockActuel() {
-        return stockActuel;
-    }
-
-    public void setStockActuel(Integer stockActuel) {
-        this.stockActuel = stockActuel;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public Double getNote() {
-        return note;
-    }
-
-    public void setNote(Double note) {
-        this.note = note;
-    }
-
-    public List<Colis> getColis() {
-        return colis;
-    }
-
-    public void setColis(List<Colis> colis) {
-        this.colis = colis;
-    }
 
     // Méthodes métier
     public boolean peutRecevoirColis() {
@@ -172,4 +87,5 @@ public class PointRelais {
     public void notifierClient(String clientId, String message) {
         // TODO: Implémenter le système de notification
     }
+
 }

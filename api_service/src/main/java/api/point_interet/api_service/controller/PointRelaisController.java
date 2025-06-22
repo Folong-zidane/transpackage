@@ -9,10 +9,13 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.http.HttpStatus;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/points-relais")
@@ -25,6 +28,16 @@ public class PointRelaisController {
     @Autowired
     public PointRelaisController(PointRelaisService pointRelaisService) {
         this.pointRelaisService = pointRelaisService;
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<String> handleHttpMessageNotReadable(HttpMessageNotReadableException e) {
+        return ResponseEntity.badRequest().body("Erreur de lecture JSON : " + e.getMostSpecificCause().getMessage());
+    }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<String> handleValidationException(MethodArgumentNotValidException e) {
+        return ResponseEntity.badRequest().body("Erreur de validation : " + e.getBindingResult().toString());
     }
 
     @Operation(summary = "Rechercher des points relais par ville",
@@ -146,7 +159,7 @@ public class PointRelaisController {
     }
 
     @PostMapping("/{id}/colis/{colisId}/reception")
-    public ResponseEntity<Void> recevoirColis(@PathVariable Long id, @PathVariable Long colisId) {
+    public ResponseEntity<Void> recevoirColis(@PathVariable Long id, @PathVariable UUID colisId) {
         pointRelaisService.recevoirColis(id, colisId);
         return ResponseEntity.ok().build();
     }
@@ -154,7 +167,7 @@ public class PointRelaisController {
     @PostMapping("/{id}/colis/{colisId}/retrait")
     public ResponseEntity<Void> retirerColis(
             @PathVariable Long id, 
-            @PathVariable Long colisId, 
+            @PathVariable UUID colisId, 
             @RequestParam String codeQR) {
         pointRelaisService.retirerColis(id, colisId, codeQR);
         return ResponseEntity.ok().build();
