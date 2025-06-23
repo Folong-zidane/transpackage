@@ -481,7 +481,7 @@ const Grelais: React.FC<GrelaisProps> = ({ utilisateur: initialUserProp }) => {
           </div>
         ) : (
           <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 2xl:grid-cols-4">
-            {pointsRelais.map(point => (
+            {pointsRelais.map((point, index) => (
               <div  key={`${point.id}-${index}`}  className="bg-white rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border border-slate-100 group relative max-w-xs">
                 {point.recent && (
                   <div className="absolute -top-1 -right-1 z-10">
