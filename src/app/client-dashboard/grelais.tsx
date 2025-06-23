@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react'; // Added useEffect
+import React, { useState, useRef, useEffect, useCallback } from 'react'; // Added useEffect
 import { 
   Plus, Edit2, Trash2, Package, Map, 
   BarChart2, Star, DollarSign, MapPin, Save,
@@ -7,6 +7,11 @@ import {
 } from 'lucide-react';
 import GerantForm, { GerantFormData, Utilisateur as GerantUtilisateur } from './gerant';
 import Link from 'next/link';
+import { api } from '@/lib/api';
+import { useRelayPoints } from '@/context/RelayPointsContex';
+import { useAuth } from '@/context/AuthContext';
+import dynamic from 'next/dynamic';
+import maplibregl from 'maplibre-gl';
 
 // Types (assuming PointRelais and Utilisateur interfaces are the same)
 interface PointRelais {
@@ -45,6 +50,12 @@ interface GrelaisProps {
   utilisateur: Utilisateur; // This is the initial prop from the parent
 }
 
+// --- Import Dynamique de la Carte ---
+const MapPicker = dynamic(() => import('../envoyer/MapComponent'), {
+  ssr: false,
+  loading: () => <div className="h-full w-full flex items-center justify-center bg-gray-100"><Loader size={24} className="animate-spin" /></div>,
+});
+
 // Define localStorage keys
 const LOCAL_STORAGE_IS_GERANT_PREFIX = 'grelais_isGerant_';
 const LOCAL_STORAGE_POINTS_RELAIS_PREFIX = 'grelais_pointsRelais_';
@@ -54,7 +65,8 @@ const Grelais: React.FC<GrelaisProps> = ({ utilisateur: initialUserProp }) => {
   const [utilisateur, setUtilisateur] = useState<Utilisateur>(initialUserProp);
   // State for points relais, potentially loaded from localStorage
   const [pointsRelais, setPointsRelais] = useState<PointRelais[]>([]);
-
+  const { refetchPoints } = useRelayPoints();
+  const { user } = useAuth();
   const [selectedPointRelais, setSelectedPointRelais] = useState<PointRelais | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isCreateMode, setIsCreateMode] = useState(false);
@@ -62,6 +74,9 @@ const Grelais: React.FC<GrelaisProps> = ({ utilisateur: initialUserProp }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
+    // NOUVEAU: États pour la carte dans le modal
+  const mapModalInstanceRef = useRef<maplibregl.Map | null>(null);
+  const positionMarkerRef = useRef<maplibregl.Marker | null>(null);
 
   const [newPointRelais, setNewPointRelais] = useState<Partial<PointRelais>>({
     type: 'Commerce'
@@ -138,6 +153,36 @@ const Grelais: React.FC<GrelaisProps> = ({ utilisateur: initialUserProp }) => {
     setIsCreateMode(false);
     setIsModalOpen(true);
   };
+
+    const handleMapReadyInModal = useCallback((map: maplibregl.Map) => {
+    mapModalInstanceRef.current = map;
+  }, []);
+
+  const handleMapClickInModal = useCallback((coords: { lng: number; lat: number }) => {
+    const { lng, lat } = coords;
+    // Mettre à jour les coordonnées dans le formulaire
+    const locationString = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+    if (isCreateMode) {
+      setNewPointRelais(prev => ({ ...prev, localisation: locationString, latitude: lat, longitude: lng }));
+    }
+    
+    // Mettre à jour le marqueur sur la carte
+    const map = mapModalInstanceRef.current;
+    if (map) {
+      if (positionMarkerRef.current) {
+        positionMarkerRef.current.setLngLat([lng, lat]);
+      } else {
+        const el = document.createElement('div');
+        el.className = 'w-8 h-8 flex items-center justify-center';
+        el.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="#ef4444" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>`;
+        
+        positionMarkerRef.current = new maplibregl.Marker(el)
+          .setLngLat([lng, lat])
+          .addTo(map);
+      }
+      map.flyTo({ center: [lng, lat] });
+    }
+  }, [isCreateMode]);
 
   const openCreateModal = () => {
     setSelectedPointRelais(null);
@@ -225,56 +270,81 @@ const Grelais: React.FC<GrelaisProps> = ({ utilisateur: initialUserProp }) => {
     }
   };
 
+  const [apiError, setApiError] = useState<string | null>(null);
+
   const handleCreate = async (event?: React.FormEvent) => {
-    if (event) event.preventDefault(); // Prevent default form submission if called from form
+    if (event) event.preventDefault();
+    
+    // Réinitialiser les erreurs précédentes
+    setApiError(null);
     setIsLoading(true);
-    await new Promise(resolve => setTimeout(resolve, 1500)); 
 
-    const newPoint: PointRelais = {
-      id: Date.now().toString(),
-      nom: newPointRelais.nom || 'Nouveau Point Relais',
-      photo: newPointRelais.photo || '', // Provide default empty string if undefined
-      localisation: newPointRelais.localisation || 'Non défini',
-      quartier: newPointRelais.quartier || 'Non défini',
-      description: newPointRelais.description || 'Aucune description.',
-      type: newPointRelais.type as 'Bureau' | 'Commerce' | 'Agence' || 'Commerce',
-      contact: newPointRelais.contact || utilisateur.telephone || 'N/A',
-      nomProprietaire: newPointRelais.nomProprietaire || `${utilisateur.nom} ${utilisateur.prenom}`,
-      horaires: newPointRelais.horaires || '09:00 - 17:00',
-      capaciteMax: Number(newPointRelais.capaciteMax) || 50,
-      nombreColis: 0,
-      pourcentageVente: 0,
-      retourUtilisateurs: 0,
-      gainsPourvus: 0,
-      tauxPopularite: 0,
-      recent: true,
-      status: 'en_attente'
+    // 1. Extraire les coordonnées depuis la chaîne de caractères "lat, lng"
+    const coords = (newPointRelais.localisation || '0,0').split(',').map(coord => parseFloat(coord.trim()));
+    const latitude = coords[0] || 0;
+    const longitude = coords[1] || 0;
+
+    // 2. Préparer le payload pour l'API, en respectant la structure attendue
+    const payload = {
+      name: newPointRelais.nom || 'Nouveau Point Relais',
+      address: newPointRelais.quartier || 'Adresse non spécifiée', // Utilisez quartier ou une adresse complète si vous l'avez
+      latitude: latitude,
+      longitude: longitude,
+      phone: newPointRelais.contact || utilisateur.telephone,
+      email: utilisateur.email, // L'email du gérant (utilisateur actuel)
+      openingHours: newPointRelais.horaires || '09:00 - 18:00',
+      // 'managerId' est géré par le backend via le token d'authentification
     };
-    
-    // This state update will trigger Effect 2 to save to localStorage
-    setPointsRelais(prevPoints => [...prevPoints, newPoint]); 
-    
-    setIsLoading(false);
-    setSuccessMessage("Point relais créé et en attente de validation!"); // For modal
-    setShowSuccess(true); // Shows message in modal
 
-    setTimeout(() => {
-      // This success is for the floating notification after modal closes
-      setShowSuccess(false); // Reset for next modal usage
-      closeModal();
-      setSuccessMessage("Point relais créé ! En attente de validation.");
-      setShowSuccess(true); // Show floating notification
-      setTimeout(() => setShowSuccess(false), 3500);
-    }, 2000);
+    try {
+      // 3. Appeler l'API pour créer le point relais
+      const createdPointFromApi = await api.relayPoints.create(payload);
+
+      // 4. Mettre à jour l'état local avec la réponse de l'API (la source de vérité)
+      // Cela garantit que vous avez le bon ID et toutes les données du serveur.
+      setPointsRelais(prevPoints => [...prevPoints, createdPointFromApi]);
+      
+      // 5. Gérer le feedback de succès
+      setSuccessMessage("Point relais créé avec succès ! Il est en attente de validation.");
+      setShowSuccess(true); // Affiche le message dans le modal si toujours ouvert
+
+      setTimeout(() => {
+        closeModal();
+        // Affiche la notification flottante après la fermeture du modal
+        setTimeout(() => setShowSuccess(false), 3500);
+      }, 2000);
+
+    } catch (error: any) {
+      // 6. Gérer les erreurs de l'API
+      console.error("Erreur lors de la création du point relais:", error);
+      setApiError(error.message || "Une erreur est survenue. Veuillez vérifier les informations et réessayer.");
+    } finally {
+      // 7. Toujours arrêter le chargement
+      setIsLoading(false);
+    }
   };
 
-  const handleDelete = (id: string) => {
-    if (window.confirm('Êtes-vous sûr de vouloir supprimer ce point relais ?')) {
-      // This state update will trigger Effect 2 to save to localStorage
+  const handleDelete = async (id: string) => {
+    if (window.confirm('Êtes-vous sûr de vouloir supprimer ce point relais ? Cette action est irréversible.')) {
+      // Optionnel: Mettre à jour l'UI immédiatement pour une meilleure réactivité (suppression optimiste)
+      const originalPoints = [...pointsRelais];
       setPointsRelais(pointsRelais.filter(point => point.id !== id));
-      setSuccessMessage("Point relais supprimé.");
-      setShowSuccess(true);
-      setTimeout(() => setShowSuccess(false), 3000);
+
+      try {
+        // Appeler l'API pour supprimer le point relais
+        await api.relayPoints.delete(id); // Assurez-vous que votre api.ts a une fonction delete
+
+        // Si l'appel réussit, afficher un message de succès
+        setSuccessMessage("Point relais supprimé avec succès.");
+        setShowSuccess(true);
+        setTimeout(() => setShowSuccess(false), 3000);
+
+      } catch (error: any) {
+        // Si l'appel échoue, annuler la suppression optimiste et afficher une erreur
+        console.error("Erreur lors de la suppression du point relais:", error);
+        alert(`La suppression a échoué: ${error.message}`);
+        setPointsRelais(originalPoints); // Restaurer la liste originale
+      }
     }
   };
 
@@ -412,7 +482,7 @@ const Grelais: React.FC<GrelaisProps> = ({ utilisateur: initialUserProp }) => {
         ) : (
           <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 2xl:grid-cols-4">
             {pointsRelais.map(point => (
-              <div key={point.id} className="bg-white rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border border-slate-100 group relative max-w-xs">
+              <div  key={`${point.id}-${index}`}  className="bg-white rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border border-slate-100 group relative max-w-xs">
                 {point.recent && (
                   <div className="absolute -top-1 -right-1 z-10">
                     <span className="bg-gradient-to-r from-orange-500 to-red-500 text-white text-xs px-2 py-1 rounded-full shadow-lg animate-pulse text-[10px]">
@@ -467,7 +537,7 @@ const Grelais: React.FC<GrelaisProps> = ({ utilisateur: initialUserProp }) => {
                     </div>
                     <div className="bg-slate-50 rounded-lg p-2 text-center">
                       <Star className="mx-auto text-yellow-500 mb-1 text-sm h-4 w-4" />
-                      <div className="text-sm font-bold text-slate-800">{point.retourUtilisateurs.toFixed(1)}</div>
+                      <div className="text-sm font-bold text-slate-800">{(point.retourUtilisateurs || 0).toFixed(1)}</div>
                       <div className="text-xs text-slate-600">Note</div>
                     </div>
                   </div>
@@ -579,6 +649,15 @@ const Grelais: React.FC<GrelaisProps> = ({ utilisateur: initialUserProp }) => {
                         <MapPin className="inline mr-2 h-5 w-5" />
                         Localisation
                       </label>
+                    <p className="text-xs text-slate-500 mb-2">Cliquez sur la carte pour définir la position exacte.</p>
+                    <div className="h-64 w-full rounded-xl overflow-hidden border">
+                      <MapPicker
+                        onMapReady={handleMapReadyInModal}
+                        onMapClick={handleMapClickInModal}
+                        initialCenter={[3.8686, 11.5184]} // Coordonnées de Yaoundé par défaut
+                        initialZoom={12}
+                      />
+                    </div>
                       <div className="flex space-x-3">
                         <input
                           type="text"

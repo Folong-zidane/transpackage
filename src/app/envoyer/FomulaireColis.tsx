@@ -8,17 +8,22 @@ import {
   PhotoIcon,
   XCircleIcon,
   ScaleIcon,
-  CubeIcon,
+  CubeIcon, // Already present, can be used
   ExclamationTriangleIcon,
   BeakerIcon,
   ClockIcon,
   CheckCircleIcon,
   InformationCircleIcon,
-  ShieldCheckIcon, // Pour l'assurance
-  BoltIcon, // Pour l'envoi express
-  CurrencyDollarIcon // Pour la valeur du colis
+  ShieldCheckIcon,
+  BoltIcon,
+  CurrencyDollarIcon,
+  HomeModernIcon, // Pour la prise en charge à domicile
+  MapPinIcon,     // Pour la livraison à la destination finale
+  UsersIcon,      // Pour la section livreur
 } from '@heroicons/react/24/outline';
+import { FullShippingData } from './page';
 
+// --- Interfaces et Types ---
 interface PackageData {
   image: string | null;
   designation: string;
@@ -30,15 +35,22 @@ interface PackageData {
   contentType: 'solid' | 'liquid' | '';
   isPerishable: boolean;
   description: string;
-  declaredValue: string; // Nouvelle propriété
-  isInsured: boolean;    // Nouvelle propriété
+  declaredValue: string;
+  isInsured: boolean;
+  deliveryAtOrigin: boolean;
+  deliveryAtDestination: boolean;
 }
 
+
 interface PackageRegistrationProps {
-  onContinue: (data: PackageData & { expressOption: ExpressOption }) => void; // Ajout de expressOption
+  initialData: Partial<FullShippingData>;
+  onContinue: (data: PackageData & { expressOption: ExpressOption }) => void;
 }
 
 type ExpressOption = '' | '24h' | '48h' | '72h';
+
+const DELIVERY_AT_ORIGIN_COST = 1200; // Coût pour prise en charge à domicile
+const DELIVERY_AT_DESTINATION_COST = 1800; // Coût pour livraison au destinataire
 
 const LoadingDots = () => (
   <div className="flex space-x-1 items-center justify-center">
@@ -50,35 +62,50 @@ const LoadingDots = () => (
 
 const OptionCard = ({
   title,
+  description, // Optional description for more clarity
   icon,
   isSelected,
   onClick,
-  isToggle = false // Pour indiquer si c'est un bouton à bascule
+  isToggle = false,
+  cost // Optional cost to display
 }: {
   title: string;
+  description?: string;
   icon: React.ReactNode;
   isSelected: boolean;
   onClick: () => void;
   isToggle?: boolean;
+  cost?: number;
 }) => (
   <div
-    className={`border rounded-md p-2 cursor-pointer transition-all duration-300 hover:shadow-sm flex flex-col items-center justify-center h-full
-      ${isSelected ? 'border-green-500 bg-green-50 shadow-md' : 'border-gray-200'}`}
+    className={`border rounded-lg p-3 cursor-pointer transition-all duration-300 hover:shadow-lg flex flex-col items-center justify-center h-full text-center
+      ${isSelected ? 'border-green-500 bg-green-50 shadow-green-200/50' : 'border-gray-200 bg-white hover:border-gray-300'}`}
     onClick={onClick}
   >
-    <div className={`p-2 rounded-full mb-1 ${isSelected ? 'bg-green-100' : 'bg-gray-100'}`}>
-      {React.cloneElement(icon as React.ReactElement, { className: `w-5 h-5 ${isSelected ? 'text-green-600' : 'text-gray-500'}` })}
+    <div className={`p-2 rounded-full mb-2 ${isSelected ? 'bg-green-100' : 'bg-gray-100'}`}>
+      {React.cloneElement(icon as React.ReactElement, { className: `w-6 h-6 ${isSelected ? 'text-green-600' : 'text-gray-500'}` })}
     </div>
-    <span className={`text-center text-xs sm:text-sm font-medium ${isSelected ? 'text-green-700' : 'text-gray-700'}`}>
+    <span className={`text-sm font-semibold ${isSelected ? 'text-green-700' : 'text-gray-800'}`}>
       {title}
     </span>
-    {isSelected && isToggle && ( // Afficher la coche seulement si c'est un toggle et sélectionné
-      <div className="mt-1">
-        <CheckCircleIcon className="w-3 h-3 text-green-500" />
+    {description && (
+      <span className={`text-xs mt-1 ${isSelected ? 'text-green-600' : 'text-gray-500'}`}>
+        {description}
+      </span>
+    )}
+    {cost !== undefined && (
+      <span className={`text-xs mt-1 font-medium ${isSelected ? 'text-green-600' : 'text-gray-500'}`}>
+        (+ {cost.toLocaleString()} FCFA)
+      </span>
+    )}
+    {isSelected && isToggle && (
+      <div className="absolute top-2 right-2">
+        <CheckCircleIcon className="w-4 h-4 text-green-500" />
       </div>
     )}
   </div>
 );
+
 
 const PackageRegistration: React.FC<PackageRegistrationProps> = ({ onContinue }) => {
   const [packageData, setPackageData] = useState<PackageData>({
@@ -92,11 +119,13 @@ const PackageRegistration: React.FC<PackageRegistrationProps> = ({ onContinue })
     contentType: '',
     isPerishable: false,
     description: '',
-    declaredValue: '', // Initialisation
-    isInsured: false,    // Initialisation
+    declaredValue: '',
+    isInsured: false,
+    deliveryAtOrigin: false, // Initialisation
+    deliveryAtDestination: false, // Initialisation
   });
 
-  const [expressOption, setExpressOption] = useState<ExpressOption>(''); // Nouvel état
+  const [expressOption, setExpressOption] = useState<ExpressOption>('');
   const [priceLoading, setPriceLoading] = useState(false);
   const [price, setPrice] = useState<number | null>(null);
   const [basePriceForCalc, setBasePriceForCalc] = useState<number | null>(null);
@@ -111,7 +140,12 @@ const PackageRegistration: React.FC<PackageRegistrationProps> = ({ onContinue })
     if (savedData) {
       try {
         const parsedData = JSON.parse(savedData);
-        setPackageData(parsedData);
+        // Ensure new fields have defaults if not present in localStorage
+        setPackageData({
+            deliveryAtOrigin: false,
+            deliveryAtDestination: false,
+            ...parsedData
+        });
         if (savedExpressOption) {
           setExpressOption(savedExpressOption);
         }
@@ -120,6 +154,57 @@ const PackageRegistration: React.FC<PackageRegistrationProps> = ({ onContinue })
       }
     }
   }, []);
+
+  // Calcul de prix LOCAL (estimation)
+  useEffect(() => {
+    const updatePrice = () => {
+      const { weight, isFragile, contentType, isPerishable, length, width, height, declaredValue, isInsured, deliveryAtOrigin, deliveryAtDestination } = packageData;
+
+      const weightNum = parseFloat(weight);
+      if (isNaN(weightNum) || weightNum <= 0) {
+        setPrice(null);
+        setBasePriceForCalc(null);
+        setVolume(null);
+        return;
+      }
+
+      setPriceLoading(true);
+
+      const lengthNum = parseFloat(length) || 0;
+      const widthNum = parseFloat(width) || 0;
+      const heightNum = parseFloat(height) || 0;
+      const declaredValueNum = parseFloat(declaredValue) || 0;
+      
+      const vol = lengthNum * widthNum * heightNum;
+      setVolume(vol > 0 ? vol : null);
+
+      setTimeout(() => {
+        let basePrice = 1500 + weightNum * 300;
+        const volumetricWeight = vol / 5000;
+        if (volumetricWeight > weightNum) {
+          basePrice = 1500 + volumetricWeight * 300;
+        }
+        setBasePriceForCalc(basePrice);
+
+        let totalAdditionalFees = 0;
+        if (isFragile) totalAdditionalFees += basePrice * 0.15;
+        if (contentType === 'liquid') totalAdditionalFees += basePrice * 0.10;
+        if (isPerishable) totalAdditionalFees += basePrice * 0.20;
+        if (isInsured && declaredValueNum > 0) totalAdditionalFees += declaredValueNum * 0.05;
+        if (deliveryAtOrigin) totalAdditionalFees += DELIVERY_AT_ORIGIN_COST;
+        if (deliveryAtDestination) totalAdditionalFees += DELIVERY_AT_DESTINATION_COST;
+
+        let expressFee = 0;
+        if (expressOption === '24h') expressFee = basePrice * 0.30;
+        else if (expressOption === '48h') expressFee = basePrice * 0.20;
+        else if (expressOption === '72h') expressFee = basePrice * 0.10;
+        
+        setPrice(basePrice + totalAdditionalFees + expressFee);
+        setPriceLoading(false);
+      }, 500);
+    };
+    updatePrice();
+  }, [packageData, expressOption]);
 
   useEffect(() => {
     try {
@@ -158,7 +243,7 @@ const PackageRegistration: React.FC<PackageRegistrationProps> = ({ onContinue })
 
   useEffect(() => {
     const updatePrice = () => {
-      const { weight, isFragile, contentType, isPerishable, length, width, height, declaredValue, isInsured } = packageData;
+      const { weight, isFragile, contentType, isPerishable, length, width, height, declaredValue, isInsured, deliveryAtOrigin, deliveryAtDestination } = packageData;
 
       const weightNum = parseFloat(weight);
       const lengthNum = parseFloat(length);
@@ -169,7 +254,7 @@ const PackageRegistration: React.FC<PackageRegistrationProps> = ({ onContinue })
       if (!isNaN(weightNum)) {
         setPriceLoading(true);
 
-        const vol = (lengthNum || 0) * (widthNum || 0) * (heightNum || 0); // Gérer si non défini
+        const vol = (lengthNum || 0) * (widthNum || 0) * (heightNum || 0);
         setVolume(vol > 0 ? vol : null);
 
         setTimeout(() => {
@@ -178,24 +263,27 @@ const PackageRegistration: React.FC<PackageRegistrationProps> = ({ onContinue })
           if (volumetricWeight > weightNum) {
             basePrice = 1500 + volumetricWeight * 300;
           }
-          setBasePriceForCalc(basePrice); // Sauvegarder le prix de base pour les calculs de suppléments
+          setBasePriceForCalc(basePrice);
 
           let totalAdditionalFees = 0;
 
           if (isFragile) totalAdditionalFees += basePrice * 0.15;
-          if (contentType === 'liquid') totalAdditionalFees += basePrice * 0.10; // Légère réduction pour le liquide
+          if (contentType === 'liquid') totalAdditionalFees += basePrice * 0.10;
           if (isPerishable) totalAdditionalFees += basePrice * 0.20;
 
           if (isInsured && !isNaN(declaredValueNum) && declaredValueNum > 0) {
-            totalAdditionalFees += declaredValueNum * 0.05; // 5% de la valeur déclarée pour l'assurance
+            totalAdditionalFees += declaredValueNum * 0.05;
           }
 
           let expressFee = 0;
           if (expressOption === '24h') expressFee = basePrice * 0.30;
           else if (expressOption === '48h') expressFee = basePrice * 0.20;
           else if (expressOption === '72h') expressFee = basePrice * 0.10;
-          
           totalAdditionalFees += expressFee;
+
+          // Ajout des coûts de livreur
+          if (deliveryAtOrigin) totalAdditionalFees += DELIVERY_AT_ORIGIN_COST;
+          if (deliveryAtDestination) totalAdditionalFees += DELIVERY_AT_DESTINATION_COST;
 
           setPrice(basePrice + totalAdditionalFees);
           setPriceLoading(false);
@@ -244,7 +332,7 @@ const PackageRegistration: React.FC<PackageRegistrationProps> = ({ onContinue })
         if (field === 'declaredValue') {
             setPackageData(prev => ({ ...prev, declaredValue: value }));
         } else {
-            setPackageData(prev => ({ ...prev, [field as keyof PackageData]: value }));
+            setPackageData(prev => ({ ...prev, [field as keyof Omit<PackageData, 'deliveryAtOrigin' | 'deliveryAtDestination'>]: value }));
         }
     }
   };
@@ -258,7 +346,7 @@ const PackageRegistration: React.FC<PackageRegistrationProps> = ({ onContinue })
         {/* Formulaire d'enregistrement de colis */}
         <div className="flex-1">
           {/* Section photo du colis */}
-          <div className="bg-white p-4 rounded-md shadow-sm border border-gray-100 mb-3 animate-fadeIn" style={{ animationDelay: '0.1s' }}>
+          <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-100 mb-4 animate-fadeIn" style={{ animationDelay: '0.1s' }}>
             <div className="flex items-center mb-2">
               <PhotoIcon className="w-5 h-5 text-green-600 mr-2" />
               <h2 className="text-lg text-black font-medium">Photo du colis <span className="text-red-500">*</span></h2>
@@ -301,7 +389,7 @@ const PackageRegistration: React.FC<PackageRegistrationProps> = ({ onContinue })
           </div>
 
           {/* Section information du colis */}
-          <div className="bg-white p-4 rounded-md shadow-sm border border-gray-100 mb-3 animate-fadeIn" style={{ animationDelay: '0.2s' }}>
+          <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-100 mb-4 animate-fadeIn" style={{ animationDelay: '0.2s' }}>
             <div className="flex items-center mb-2">
               <ShoppingBagIcon className="w-5 h-5 text-green-600 mr-2" />
               <h2 className="text-lg text-black font-medium">Information du colis</h2>
@@ -337,7 +425,7 @@ const PackageRegistration: React.FC<PackageRegistrationProps> = ({ onContinue })
           </div>
 
           {/* Section poids et dimensions */}
-          <div className="bg-white p-4 rounded-md shadow-sm border border-gray-100 mb-3 animate-fadeIn" style={{ animationDelay: '0.3s' }}>
+          <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-100 mb-4 animate-fadeIn" style={{ animationDelay: '0.3s' }}>
             <div className="flex items-center mb-2">
               <ScaleIcon className="w-5 h-5 text-green-600 mr-2" />
               <h2 className="text-lg text-black font-medium">Poids et Dimensions</h2>
@@ -417,7 +505,7 @@ const PackageRegistration: React.FC<PackageRegistrationProps> = ({ onContinue })
           </div>
 
           {/* Section caractéristiques spéciales */}
-          <div className="bg-white p-4 rounded-md shadow-sm border border-gray-100 mb-3 animate-fadeIn" style={{ animationDelay: '0.4s' }}>
+          <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-100 mb-4 animate-fadeIn" style={{ animationDelay: '0.4s' }}>
             <div className="flex items-center mb-3">
               <ExclamationTriangleIcon className="w-5 h-5 text-green-600 mr-2" />
               <h2 className="text-lg text-black font-medium">Caractéristiques spéciales (optionnel)</h2>
@@ -475,7 +563,7 @@ const PackageRegistration: React.FC<PackageRegistrationProps> = ({ onContinue })
           </div>
 
           {/* Section Options d'envoi Express */}
-          <div className="bg-white p-4 rounded-md shadow-sm border border-gray-100 mb-3 animate-fadeIn" style={{ animationDelay: '0.5s' }}>
+          <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-100 mb-4 animate-fadeIn" style={{ animationDelay: '0.5s' }}>
             <div className="flex items-center mb-3">
               <BoltIcon className="w-5 h-5 text-green-600 mr-2" />
               <h2 className="text-lg text-black font-medium">Options d'envoi (optionnel)</h2>
@@ -508,12 +596,50 @@ const PackageRegistration: React.FC<PackageRegistrationProps> = ({ onContinue })
             </div>
           </div>
 
+          {/* Section Options de Livreur */}
+          <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-100 mb-4 animate-fadeIn" style={{ animationDelay: '0.6s' }}>
+            <div className="flex items-center mb-3">
+              <UsersIcon className="w-5 h-5 text-green-600 mr-2" />
+              <h2 className="text-lg text-black font-medium">Options de Livreur (optionnel)</h2>
+            </div>
+            <p className="text-sm text-gray-600 mb-3">
+              Facilitez-vous la vie ! Nos livreurs peuvent s'occuper de la prise en charge et/ou de la livraison finale.
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <OptionCard
+                title="Prise en charge à domicile"
+                description="Le livreur récupère le colis chez vous et le dépose au point relais."
+                icon={<HomeModernIcon />}
+                isSelected={packageData.deliveryAtOrigin}
+                onClick={() => setPackageData(prev => ({ ...prev, deliveryAtOrigin: !prev.deliveryAtOrigin }))}
+                isToggle={true}
+                cost={DELIVERY_AT_ORIGIN_COST}
+              />
+              <OptionCard
+                title="Livraison au destinataire"
+                description="Le livreur récupère le colis au point relais d'arrivée et le livre à l'adresse du destinataire."
+                icon={<MapPinIcon />}
+                isSelected={packageData.deliveryAtDestination}
+                onClick={() => setPackageData(prev => ({ ...prev, deliveryAtDestination: !prev.deliveryAtDestination }))}
+                isToggle={true}
+                cost={DELIVERY_AT_DESTINATION_COST}
+              />
+            </div>
+            { !packageData.deliveryAtOrigin && !packageData.deliveryAtDestination && (
+                <p className="text-xs text-gray-500 mt-3 text-center">
+                    <InformationCircleIcon className="w-3 h-3 inline mr-1" />
+                    Par défaut, vous déposez et récupérez vous-même le colis aux points relais.
+                </p>
+            )}
+          </div>
+
+
         </div>
 
         {/* Résumé et prix du colis */}
-        <div className="w-full lg:w-96 bg-gray-100 p-4 rounded-md shadow-md border border-gray-100 h-fit sticky top-24 animate-fadeIn" style={{ animationDelay: '0.6s' }}> {/* top-24 pour laisser de la place si navbar fixe */}
-          <h3 className="text-lg font-bold mb-4 text-green-700 flex items-center">
-            <TruckIcon className="w-5 h-5 mr-2" />
+        <div className="w-full lg:w-96 bg-gray-50 p-4 rounded-lg shadow-md border border-gray-200 h-fit sticky top-24 animate-fadeIn" style={{ animationDelay: '0.7s' }}>
+          <h3 className="text-xl font-bold mb-4 text-green-700 flex items-center">
+            <TruckIcon className="w-6 h-6 mr-2" />
             RÉSUMÉ DU COLIS
           </h3>
 
@@ -533,7 +659,7 @@ const PackageRegistration: React.FC<PackageRegistrationProps> = ({ onContinue })
               </div>
             )}
             <div>
-              <p className="font-medium text-black text-base break-words">
+              <p className="font-semibold text-black text-base break-words">
                 {packageData.designation ? packageData.designation : 'Colis en cours...'}
               </p>
               <p className="text-sm text-gray-500">
@@ -578,10 +704,10 @@ const PackageRegistration: React.FC<PackageRegistrationProps> = ({ onContinue })
                     {packageData.isInsured && <span className="font-medium text-blue-500 block text-xs ml-2">- Assuré (val. {parseFloat(packageData.declaredValue) > 0 ? `${parseFloat(packageData.declaredValue).toLocaleString()} FCFA` : 'N/A'})</span>}
                 </div>
             )}
-
           </div>
 
           <div className="border-b border-gray-300 pb-3 mb-3 text-sm">
+            <h4 className="text-gray-700 font-semibold mb-1">Détail du coût :</h4>
             <div className="flex justify-between mb-1">
               <span className="text-gray-600">Prix de base :</span>
               <span className="font-medium text-black">
@@ -624,7 +750,7 @@ const PackageRegistration: React.FC<PackageRegistrationProps> = ({ onContinue })
               <div className="flex justify-between mb-1">
                 <span className="text-gray-600">Suppl. Express {expressOption} :</span>
                 <span className="font-medium text-purple-500">
-                  {priceLoading ? <LoadingDots /> : 
+                  {priceLoading ? <LoadingDots /> :
                     expressOption === '24h' ? `+${Math.round(basePriceForCalc * 0.30).toLocaleString()} FCFA` :
                     expressOption === '48h' ? `+${Math.round(basePriceForCalc * 0.20).toLocaleString()} FCFA` :
                     expressOption === '72h' ? `+${Math.round(basePriceForCalc * 0.10).toLocaleString()} FCFA` : '...'
@@ -632,9 +758,25 @@ const PackageRegistration: React.FC<PackageRegistrationProps> = ({ onContinue })
                 </span>
               </div>
             )}
+            {packageData.deliveryAtOrigin && (
+              <div className="flex justify-between mb-1">
+                <span className="text-gray-600">Prise en charge domicile :</span>
+                <span className="font-medium text-teal-500">
+                  {priceLoading ? <LoadingDots /> : `+${DELIVERY_AT_ORIGIN_COST.toLocaleString()} FCFA`}
+                </span>
+              </div>
+            )}
+            {packageData.deliveryAtDestination && (
+              <div className="flex justify-between mb-1">
+                <span className="text-gray-600">Livraison destinataire :</span>
+                <span className="font-medium text-teal-500">
+                  {priceLoading ? <LoadingDots /> : `+${DELIVERY_AT_DESTINATION_COST.toLocaleString()} FCFA`}
+                </span>
+              </div>
+            )}
           </div>
 
-          <div className="flex justify-between items-center mb-4">
+          <div className="flex justify-between items-center mb-4 mt-4">
             <span className="font-bold text-black text-lg">TOTAL ESTIMÉ</span>
             <span className="font-bold text-2xl text-green-700">
               {priceLoading ? <LoadingDots /> : price !== null ? `${Math.round(price).toLocaleString()} FCFA` : "..."}

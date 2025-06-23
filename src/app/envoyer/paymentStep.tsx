@@ -73,9 +73,9 @@ const PaymentStep: React.FC<PaymentStepProps> = ({ onBack, packageData, formData
 
   // Simuler les informations de l'utilisateur connecté
   const currentUser = {
-    name: "John Doe (Expéditeur)", // Remplacez par les vraies données
-    phone: "+237 6XX XXX XXX",
-    email: "john.doe@example.com"
+    name: "Gaby Nguetcho", // Remplacez par les vraies données
+    phone: "+237 691 743 511",
+    email: "gaby.doe@example.com"
   };
 
   useEffect(() => {

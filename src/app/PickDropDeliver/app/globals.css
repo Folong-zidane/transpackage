@@ -1,0 +1,337 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+@import 'leaflet/dist/leaflet.css';
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.3s ease-out forwards;
+}
+
+.animate-pulse {
+  animation: pulse 1.5s infinite;
+}
+
+@custom-variant dark (&:is(.dark *));
+
+/* Thème clair basé sur l'image fournie - Nuances de vert */
+:root {
+  --radius: 0.5rem;
+  /* Fond légèrement gris */
+  --background: hsl(0 0% 98%);
+  --foreground: hsl(0 0% 12%);
+  /* Cartes blanches */
+  --card: hsl(0 0% 100%);
+  --card-foreground: hsl(0 0% 12%);
+  --popover: hsl(0 0% 100%);
+  --popover-foreground: hsl(0 0% 12%);
+
+  /* Couleur principale (Vert) */
+  --primary: hsl(145, 63%, 42%); /* Anciennement bleu (230, 86%, 47%) */
+  --primary-foreground: hsl(0 0% 100%);
+
+  /* Couleur secondaire (Vert clair / gris verdâtre) */
+  --secondary: hsl(150 30% 96.1%); /* Anciennement bleu clair (210 40% 96.1%) */
+  --secondary-foreground: hsl(148, 50%, 35%); /* Anciennement bleu moyen (214 60% 40%) */
+
+  /* Éléments muets (Gris verdâtre) */
+  --muted: hsl(150 15% 96%); /* Anciennement gris-bleu (210 20% 96%) */
+  --muted-foreground: hsl(152 15% 45.1%); /* Anciennement gris-bleu (215 20% 45.1%) */
+
+  /* Accents (Vert) */
+  --accent: hsl(150 15% 96%); /* Anciennement gris-bleu (210 20% 96%) */
+  --accent-foreground: hsl(145, 63%, 42%); /* Anciennement bleu (230, 86%, 47%) */
+
+  /* Couleurs d'alerte */
+  --destructive: hsl(0 84% 60%);
+  --destructive-foreground: hsl(0 0% 98%);
+  --warning: hsl(38 92% 50%);
+  --warning-foreground: hsl(0 0% 12%);
+  --success: hsl(142 72% 50%);
+  --success-foreground: hsl(0 0% 100%);
+  --info: hsl(145, 63%, 42%); /* Vert pour info (anciennement bleu) */
+  --info-foreground: hsl(0 0% 100%);
+  --pending: hsl(48, 83%, 74%); /* Jaune/Orange pour pending au lieu de violet pour plus de contraste avec le vert */
+  --pending-foreground: hsl(0 0% 15%);
+
+  /* Bordures et inputs */
+  --border: hsl(0 0% 90%);
+  --input: hsl(0 0% 90%);
+  --ring: hsl(145, 60%, 49%); /* Vert pour ring (anciennement bleu) */
+
+  /* Couleurs de graphiques */
+  --chart-1: hsl(148, 70%, 46%); /* Vert principal pour chart (anciennement bleu) */
+  --chart-2: hsl(160, 65%, 50%); /* Vert secondaire */
+  --chart-3: hsl(142 72% 50%); /* Vert existant (success) */
+  --chart-4: hsl(38 92% 50%); /* Jaune existant (warning) */
+  --chart-5: hsl(0 84% 60%); /* Rouge existant (destructive) */
+
+  /* Barre latérale - grise plus foncée */
+  --sidebar: hsl(0 0% 96%);
+  --sidebar-foreground: hsl(0 0% 12%);
+  --sidebar-primary: hsl(145, 70%, 40%); /* Vert pour sidebar-primary (anciennement bleu) */
+  --sidebar-primary-foreground: hsl(0 0% 100%);
+  --sidebar-accent: hsl(150 15% 92%); /* Vert clair pour sidebar-accent (anciennement gris-bleu) */
+  --sidebar-accent-foreground: hsl(148, 50%, 35%); /* Vert moyen pour sidebar-accent-foreground (anciennement bleu moyen) */
+  --sidebar-border: hsl(0 0% 90%);
+  --sidebar-ring: hsl(148, 70%, 46%); /* Vert pour sidebar-ring (anciennement bleu) */
+}
+
+/* Thème sombre - Nuances de vert */
+.dark {
+  --background: hsl(150 20% 11%); /* Fond sombre verdâtre */
+  --foreground: hsl(150 10% 98%);
+  --card: hsl(150 20% 14%); /* Cartes sombres verdâtres */
+  --card-foreground: hsl(150 10% 98%);
+  --popover: hsl(150 20% 14%); /* Popovers sombres verdâtres */
+  --popover-foreground: hsl(150 10% 98%);
+
+  /* Couleur principale (Vert plus vif pour le mode sombre) */
+  --primary: hsl(145, 70%, 50%); /* Anciennement bleu (240 84% 60%) */
+  --primary-foreground: hsl(0 0% 100%);
+
+  /* Couleur secondaire (Vert sombre) */
+  --secondary: hsl(150 20% 18%); /* Anciennement bleu sombre (220 47% 18%) */
+  --secondary-foreground: hsl(150 10% 98%);
+
+  /* Éléments muets (Gris verdâtre sombre) */
+  --muted: hsl(152 20% 18%); /* Anciennement gris-bleu sombre (222 47% 18%) */
+  --muted-foreground: hsl(155 10% 75%);
+
+  /* Accents (Vert sombre) */
+  --accent: hsl(152 20% 18%); /* Anciennement gris-bleu sombre (222 47% 18%) */
+  --accent-foreground: hsl(150 10% 98%);
+
+  /* Couleurs d'alerte */
+  --destructive: hsl(0 84% 60%);
+  --destructive-foreground: hsl(0 0% 98%);
+  --warning: hsl(38 92% 50%);
+  --warning-foreground: hsl(0 0% 12%);
+  --success: hsl(142 72% 42%);
+  --success-foreground: hsl(0 0% 100%);
+  --info: hsl(148, 70%, 46%); /* Vert pour info (anciennement bleu) */
+  --info-foreground: hsl(0 0% 100%);
+  --pending: hsl(48, 83%, 58%); /* Jaune/Orange pour pending */
+  --pending-foreground: hsl(0 0% 10%);
+
+  /* Bordures et inputs */
+  --border: hsl(152 20% 22%); /* Bordure verdâtre sombre */
+  --input: hsl(152 20% 22%); /* Input verdâtre sombre */
+  --ring: hsl(148, 70%, 50%); /* Ring vert (anciennement bleu) */
+
+  /* Couleurs de graphiques */
+  --chart-1: hsl(148, 70%, 50%); /* Vert principal pour chart (anciennement bleu) */
+  --chart-2: hsl(160, 60%, 45%); /* Vert secondaire */
+  --chart-3: hsl(142 72% 42%);
+  --chart-4: hsl(38 92% 50%);
+  --chart-5: hsl(0 84% 60%);
+
+  /* Barre latérale */
+  --sidebar: hsl(152 20% 13%); /* Sidebar verdâtre très sombre */
+  --sidebar-foreground: hsl(150 10% 98%);
+  --sidebar-primary: hsl(148, 75%, 40%); /* Vert pour sidebar-primary (anciennement bleu) */
+  --sidebar-primary-foreground: hsl(0 0% 100%);
+  --sidebar-accent: hsl(152 20% 18%); /* Accent verdâtre sombre */
+  --sidebar-accent-foreground: hsl(150 10% 98%);
+  --sidebar-border: hsl(152 20% 22%); /* Bordure verdâtre sombre */
+  --sidebar-ring: hsl(148, 70%, 50%); /* Ring vert (anciennement bleu) */
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(
+    --font-sans,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    Roboto,
+    sans-serif
+  );
+  --font-mono: var(
+    --font-mono,
+    ui-monospace,
+    SFMono-Regular,
+    'SF Mono',
+    Menlo,
+    Monaco,
+    Consolas,
+    monospace
+  );
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-warning: var(--warning);
+  --color-success: var(--success);
+  --color-info: var(--info);
+  --color-pending: var(--pending);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-success-foreground: var(--success-foreground);
+  --color-info-foreground: var(--info-foreground);
+  --color-pending-foreground: var(--pending-foreground);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+@layer base {
+  * {
+    @apply border-[color:var(--border)] outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* Classes utilitaires pour les badges de statut */
+.badge-arrive {
+  @apply bg-info text-info-foreground; /* Utilise le vert info */
+}
+
+.badge-stocke {
+  @apply bg-pending text-pending-foreground; /* Devrait maintenant être jaune/orange */
+}
+
+.badge-pret {
+  @apply bg-success text-success-foreground;
+}
+
+.badge-warning {
+  @apply bg-warning text-warning-foreground px-2 py-1 rounded-md text-sm inline-flex items-center;
+}
+
+/* Style pour les cartes statistiques */
+.stat-card {
+  @apply bg-card rounded-lg shadow-sm p-4 flex flex-col;
+}
+
+.stat-value {
+  @apply text-3xl font-bold;
+}
+
+.stat-label {
+  @apply text-muted-foreground text-sm;
+}
+
+.stat-metric {
+  @apply text-xs text-muted-foreground mt-2;
+}
+
+.stat-change-positive {
+  @apply text-success text-xs font-medium;
+}
+
+.stat-change-negative {
+  @apply text-destructive text-xs font-medium;
+}
+
+/* Ajoutez ces animations à votre fichier globals.css */
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px) rotate(12deg);
+  }
+  50% {
+    transform: translateY(-10px) rotate(12deg);
+  }
+}
+
+@keyframes float-delayed {
+  0%, 100% {
+    transform: translateY(0px) rotate(-12deg);
+  }
+  50% {
+    transform: translateY(-8px) rotate(-12deg);
+  }
+}
+
+@keyframes float-slow {
+  0%, 100% {
+    transform: translateY(0px) rotate(6deg);
+  }
+  50% {
+    transform: translateY(-6px) rotate(6deg);
+  }
+}
+
+@keyframes loading-bar {
+  0% {
+    width: 0%;
+  }
+  50% {
+    width: 70%;
+  }
+  100% {
+    width: 100%;
+  }
+}
+
+.animate-float {
+  animation: float 2s ease-in-out infinite;
+}
+
+.animate-float-delayed {
+  animation: float-delayed 2.5s ease-in-out infinite;
+}
+
+.animate-float-slow {
+  animation: float-slow 3s ease-in-out infinite;
+}
+
+.animate-loading-bar {
+  animation: loading-bar 2s ease-in-out infinite;
+}

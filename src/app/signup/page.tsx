@@ -1,618 +1,258 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Head from 'next/head';
-import { FiUser, FiCalendar, FiMail, FiMapPin, FiPhone, FiBriefcase, FiLink, FiCreditCard } from 'react-icons/fi';
+import Link from 'next/link';
+import { FiUser, FiMail, FiPhone, FiBriefcase, FiLock, FiEye, FiEyeOff } from 'react-icons/fi';
 import { AnimatePresence, motion } from 'framer-motion';
 import Confetti from 'react-confetti';
-import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { useAuth } from '@/context/AuthContext';
 
-// Types
-type UserType = 'client' | 'livreur' | '';
-type FormStep = 'personal' | 'livreur' | 'success';
+// Types mis à jour pour correspondre à l'API
+type UserRole = 'CLIENT' | 'ENTERPRISE';
 
 interface UserData {
-  nom: string;
-  prenom: string;
-  sexe: string;
-  dateNaissance: string;
+  lastName: string;
+  firstName: string;
   email: string;
-  ville: string;
-  typeUtilisateur: UserType;
-  entreprise?: string;
-  siteWeb?: string;
-  numeroCNI?: string;
-  contact?: string;
-  villeSiege?: string;
+  phone: string;
+  password: string;
+  role: UserRole;
+  companyName?: string; // Optionnel pour les entreprises
 }
 
 const InscriptionPage: React.FC = () => {
   const router = useRouter();
-  const [step, setStep] = useState<FormStep>('personal');
-  const [showCalendar, setShowCalendar] = useState(false);
+  const { register } = useAuth();
   const [showConfetti, setShowConfetti] = useState(false);
+  
   const [userData, setUserData] = useState<UserData>({
-    nom: '',
-    prenom: '',
-    sexe: 'homme',
-    dateNaissance: '',
+    lastName: '',
+    firstName: '',
     email: '',
-    ville: '',
-    typeUtilisateur: '',
-    entreprise: '',
-    siteWeb: '',
-    numeroCNI: '',
-    contact: '',
-    villeSiege: '',
+    phone: '',
+    password: '',
+    role: 'CLIENT',
+    companyName: '',
   });
 
-  // Form validation
-  const [errors, setErrors] = useState<{[key: string]: string}>({});
+  const [errors, setErrors] = useState<{ [key: string]: string }>({});
+  const [apiError, setApiError] = useState<string>('');
+  const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
-  // Handle input changes
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setUserData(prev => ({ ...prev, [name]: value }));
-    // Clear error when field is edited
     if (errors[name]) {
-      setErrors(prev => {
-        const newErrors = {...prev};
-        delete newErrors[name];
-        return newErrors;
-      });
+      setErrors(prev => ({ ...prev, [name]: '' }));
     }
   };
 
-  // Date selection
-  const handleDateSelect = (date: Date) => {
-    setUserData(prev => ({ 
-      ...prev, 
-      dateNaissance: format(date, 'yyyy-MM-dd') 
-    }));
-    setShowCalendar(false);
+  const handleRoleChange = (role: UserRole) => {
+    setUserData(prev => ({ ...prev, role }));
   };
 
-  // Calendar component (simplified)
-  const Calendar = () => {
-    const [currentMonth, setCurrentMonth] = useState(new Date());
-    const [selectedDate, setSelectedDate] = useState(new Date());
-    
-    const days = Array.from(
-      { length: new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0).getDate() },
-      (_, i) => i + 1
-    );
-    
-    const handleDateClick = (day: number) => {
-      const date = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day);
-      setSelectedDate(date);
-      handleDateSelect(date);
-    };
-    
-    const prevMonth = () => {
-      setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1));
-    };
-    
-    const nextMonth = () => {
-      setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1));
-    };
-    
-    return (
-      <div className="bg-white rounded-lg shadow-lg p-4 absolute z-10">
-        <div className="flex justify-between mb-2">
-          <button onClick={prevMonth} className="p-1 hover:bg-green-100 rounded">
-            &lt;
-          </button>
-          <div>
-            {format(currentMonth, 'MMMM yyyy', { locale: fr })}
-          </div>
-          <button onClick={nextMonth} className="p-1 hover:bg-green-100 rounded">
-            &gt;
-          </button>
-        </div>
-        <div className="grid grid-cols-7 gap-1 text-center">
-          {['Lu', 'Ma', 'Me', 'Je', 'Ve', 'Sa', 'Di'].map((day) => (
-            <div key={day} className="text-xs font-semibold">
-              {day}
-            </div>
-          ))}
-          {Array.from(
-            { length: new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1).getDay() - 1 },
-            (_, i) => (
-              <div key={`empty-${i}`} />
-            )
-          )}
-          {days.map((day) => (
-            <button
-              key={day}
-              onClick={() => handleDateClick(day)}
-              className={`w-8 h-8 rounded-full hover:bg-green-200 ${
-                selectedDate.getDate() === day &&
-                selectedDate.getMonth() === currentMonth.getMonth() &&
-                selectedDate.getFullYear() === currentMonth.getFullYear()
-                  ? 'bg-green-500 text-white'
-                  : ''
-              }`}
-            >
-              {day}
-            </button>
-          ))}
-        </div>
-      </div>
-    );
-  };
-
-  // Validate form
   const validateForm = (): boolean => {
-    const newErrors: {[key: string]: string} = {};
-    
-    // Validate personal info
-    if (!userData.nom) newErrors.nom = "Le nom est requis";
-    if (!userData.prenom) newErrors.prenom = "Le prénom est requis";
-    if (!userData.dateNaissance) newErrors.dateNaissance = "La date de naissance est requise";
-    if (!userData.email) {
-      newErrors.email = "L'email est requis";
-    } else if (!/\S+@\S+\.\S+/.test(userData.email)) {
-      newErrors.email = "Format d'email invalide";
-    }
-    if (!userData.ville) newErrors.ville = "La ville est requise";
-    
-    // If livreur step, validate business info
-    if (step === 'livreur') {
-      if (!userData.entreprise) newErrors.entreprise = "Le nom de l'entreprise est requis";
-      if (!userData.numeroCNI) newErrors.numeroCNI = "Le numéro de CNI est requis";
-      if (!userData.contact) newErrors.contact = "Le contact est requis";
-      if (!userData.villeSiege) newErrors.villeSiege = "La ville du siège est requise";
-    }
+    const newErrors: { [key: string]: string } = {};
+    if (!userData.firstName.trim()) newErrors.firstName = "Le prénom est requis";
+    if (!userData.lastName.trim()) newErrors.lastName = "Le nom est requis";
+    if (!userData.email.trim()) newErrors.email = "L'email est requis";
+    else if (!/\S+@\S+\.\S+/.test(userData.email)) newErrors.email = "Format d'email invalide";
+    if (!userData.password) newErrors.password = "Le mot de passe est requis";
+    else if (userData.password.length < 6) newErrors.password = "Le mot de passe doit faire au moins 6 caractères";
+    if (userData.role === 'ENTERPRISE' && !userData.companyName?.trim()) newErrors.companyName = "Le nom de l'entreprise est requis";
     
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  // Handle form submission
-  const handleSubmit = (type: UserType) => {
-    if (step === 'personal') {
-      setUserData(prev => ({ ...prev, typeUtilisateur: type }));
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setApiError('');
+    if (!validateForm()) return;
+
+    setLoading(true);
+    try {
+      // Préparer les données pour l'API
+      const payload = {
+        email: userData.email,
+        password: userData.password,
+        firstName: userData.firstName,
+        lastName: userData.lastName,
+        phone: userData.phone,
+        role: userData.role,
+      };
       
-      if (validateForm()) {
-        if (type === 'client') {
-          // Save to localStorage
-          localStorage.setItem('userData', JSON.stringify({...userData, typeUtilisateur: type}));
-          // Show success animation
-          setStep('success');
-          setShowConfetti(true);
-          // Simulate email sending
-          console.log(`Email de bienvenue envoyé à ${userData.email}`);
-        } else {
-          // Move to livreur form
-          setStep('livreur');
-        }
-      }
-    } else if (step === 'livreur') {
-      if (validateForm()) {
-        // Save to localStorage
-        localStorage.setItem('userData', JSON.stringify(userData));
-        // Show success
-        setStep('success');
-        setShowConfetti(true);
-        // Simulate email sending
-        console.log(`Email de bienvenue envoyé à ${userData.email}`);
-      }
+      await register(payload);
+      
+      // La redirection est maintenant gérée par le AuthContext
+      // On peut déclencher un effet visuel ici si on veut
+      setShowConfetti(true);
+
+    } catch (err: any) {
+      setApiError(err.message || "Une erreur est survenue. Veuillez réessayer.");
+    } finally {
+      setLoading(false);
     }
   };
 
-  useEffect(() => {
-    // Clean up confetti after 5 seconds
-    if (showConfetti) {
-      const timer = setTimeout(() => {
-        setShowConfetti(false);
-      }, 5000);
-      
-      return () => clearTimeout(timer);
-    }
-  }, [showConfetti]);
-
+  // Le return utilise AnimatePresence mais sans l'état `step` car le formulaire est unifié.
   return (
     <>
       <Head>
-        <title>Inscription | Points de Relais</title>
+        <title>Inscription | Pick & Drop</title>
         <meta name="description" content="Inscrivez-vous sur notre plateforme de points de relais" />
       </Head>
       
       <main className="min-h-screen bg-green-50 flex items-center justify-center p-4 md:p-0">
         <div className="w-full max-w-6xl bg-white rounded-xl shadow-lg overflow-hidden flex flex-col lg:flex-row">
+          
           {/* Form Section */}
-          <AnimatePresence mode="wait">
-            {step !== 'success' ? (
-              <motion.div 
-                key="form"
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                transition={{ duration: 0.3 }}
-                className={`w-full ${step === 'success' ? 'lg:w-full' : 'lg:w-1/2'} p-8`}
+          <motion.div 
+            key="signup-form"
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.5 }}
+            className="w-full lg:w-1/2 p-8 flex flex-col justify-center"
+          >
+            {showConfetti && <Confetti width={window.innerWidth} height={window.innerHeight} recycle={false} numberOfPieces={400} />}
+
+            <div className="mb-6">
+              <h1 className="text-3xl font-bold text-green-600">Créez votre compte</h1>
+              <p className="text-gray-600 mt-2">Rejoignez notre réseau de points de relais</p>
+            </div>
+
+            {apiError && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="bg-red-50 border border-red-200 text-red-600 rounded-lg p-3 mb-4 text-sm"
               >
-                <div className="mb-6">
-                  <h1 className="text-3xl font-bold text-green-600">
-                    {step === 'personal' ? 'Créez votre compte' : 'Informations professionnelles'}
-                  </h1>
-                  <p className="text-gray-600 mt-2">
-                    {step === 'personal' 
-                      ? 'Rejoignez notre réseau de points de relais' 
-                      : 'Complétez vos informations de livreur'}
-                  </p>
-                </div>
-                
-                {step === 'personal' && (
-                  <form className="space-y-4">
-                    <div className="flex flex-col md:flex-row gap-4">
-                      <div className="flex-1">
-                        <label className="block text-gray-700 mb-1">Nom</label>
-                        <div className="relative">
-                          <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500">
-                            <FiUser />
-                          </span>
-                          <input
-                            type="text"
-                            name="nom"
-                            value={userData.nom}
-                            onChange={handleChange}
-                            className={`w-full py-2 pl-10 pr-3 text-green-600 font-bold border rounded-lg focus:ring-2 focus:ring-green-300 focus:border-green-500 outline-none transition ${errors.nom ? 'border-red-500' : 'border-gray-300'}`}
-                            placeholder="Entrez votre nom"
-                          />
-                        </div>
-                        {errors.nom && <p className="text-red-500 text-sm mt-1">{errors.nom}</p>}
-                      </div>
-                      
-                      <div className="flex-1">
-                        <label className="block text-gray-700 mb-1">Prénom</label>
-                        <div className="relative">
-                          <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500">
-                            <FiUser />
-                          </span>
-                          <input
-                            type="text"
-                            name="prenom"
-                            value={userData.prenom}
-                            onChange={handleChange}
-                            className={`w-full py-2 text-green-600 font-bold pl-10 pr-3 border rounded-lg focus:ring-2 focus:ring-green-300 focus:border-green-500 outline-none transition ${errors.prenom ? 'border-red-500' : 'border-gray-300'}`}
-                            placeholder="Entrez votre prénom"
-                          />
-                        </div>
-                        {errors.prenom && <p className="text-red-500 text-sm mt-1">{errors.prenom}</p>}
-                      </div>
-                    </div>
-                    
-                    <div>
-                      <label className="block text-gray-700 mb-1">Sexe</label>
-                      <div className="flex gap-4">
-                        <label className="flex items-center">
-                          <input
-                            type="radio"
-                            name="sexe"
-                            value="homme"
-                            checked={userData.sexe === 'homme'}
-                            onChange={handleChange}
-                            className="w-4 h-4 text-green-600 border-gray-300 focus:ring-green-500"
-                          />
-                          <span className="ml-2 text-green-600 font-bold">Homme</span>
-                        </label>
-                        <label className="flex items-center">
-                          <input
-                            type="radio"
-                            name="sexe"
-                            value="femme"
-                            checked={userData.sexe === 'femme'}
-                            onChange={handleChange}
-                            className="w-4 h-4 text-green-600 border-gray-300 focus:ring-green-500"
-                          />
-                          <span className="ml-2 text-green-600 font-bold">Femme</span>
-                        </label>
-                      </div>
-                    </div>
-                    
-                    <div>
-                      <label className="block text-gray-700 mb-1">Date de naissance</label>
-                      <div className="relative">
-                        <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500">
-                          <FiCalendar />
-                        </span>
-                        <input
-                          type="text"
-                          name="dateNaissance"
-                          value={userData.dateNaissance ? format(new Date(userData.dateNaissance), 'dd/MM/yyyy') : ''}
-                          readOnly
-                          onClick={() => setShowCalendar(!showCalendar)}
-                          className={`w-full py-2 pl-10 pr-3 text-green-600 font-bold border rounded-lg focus:ring-2 focus:ring-green-300 focus:border-green-500 outline-none transition cursor-pointer ${errors.dateNaissance ? 'border-red-500' : 'border-gray-300'}`}
-                          placeholder="Sélectionnez votre date de naissance"
-                        />
-                        {showCalendar && <Calendar />}
-                      </div>
-                      {errors.dateNaissance && <p className="text-red-500 text-sm mt-1">{errors.dateNaissance}</p>}
-                    </div>
-                    
-                    <div>
-                      <label className="block text-gray-700 mb-1">Email</label>
-                      <div className="relative">
-                        <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500">
-                          <FiMail />
-                        </span>
-                        <input
-                          type="email"
-                          name="email"
-                          value={userData.email}
-                          onChange={handleChange}
-                          className={`w-full py-2 pl-10 text-green-600 font-bold font-bold pr-3 border rounded-lg focus:ring-2 focus:ring-green-300 focus:border-green-500 outline-none transition ${errors.email ? 'border-red-500' : 'border-gray-300'}`}
-                          placeholder="Entrez votre email"
-                        />
-                      </div>
-                      {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
-                    </div>
-                    
-                    <div>
-                      <label className="block text-gray-700 mb-1">Ville de résidence</label>
-                      <div className="relative">
-                        <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500">
-                          <FiMapPin />
-                        </span>
-                        <input
-                          type="text"
-                          name="ville"
-                          value={userData.ville}
-                          onChange={handleChange}
-                          className={`w-full py-2 pl-10 pr-3 text-green-600 font-bold border rounded-lg focus:ring-2 focus:ring-green-300 focus:border-green-500 outline-none transition ${errors.ville ? 'border-red-500' : 'border-gray-300'}`}
-                          placeholder="Entrez votre ville"
-                        />
-                      </div>
-                      {errors.ville && <p className="text-red-500 text-sm mt-1">{errors.ville}</p>}
-                    </div>
-                    
-                    <div className="flex flex-col md:flex-row gap-4 pt-4">
-                      <motion.button
-                        type="button"
-                        onClick={() => handleSubmit('client')}
-                        whileHover={{ scale: 1.03 }}
-                        whileTap={{ scale: 0.98 }}
-                        className="flex-1 bg-green-600 hover:bg-green-700 text-white py-3 px-6 rounded-lg font-medium flex items-center justify-center gap-2 transition shadow-md"
-                      >
-                        <FiUser />
-                        Particulier
-                      </motion.button>
-                      
-                      <motion.button
-                        type="button"
-                        onClick={() => handleSubmit('livreur')}
-                        whileHover={{ scale: 1.03 }}
-                        whileTap={{ scale: 0.98 }}
-                        className="flex-1 bg-black hover:bg-gray-800 text-white py-3 px-6 rounded-lg font-medium flex items-center justify-center gap-2 transition shadow-md"
-                      >
-                        <FiBriefcase />
-                        Proffessionel
-                      </motion.button>
-                    </div>
-                    <div className="text-center mt-2">
-                      <p className="text-gray-600 mb-1">Vous avez déjà un compte ?</p>
-                      <motion.button
-                        whileHover={{ scale: 1.03 }}
-                        whileTap={{ scale: 0.98 }}
-                        onClick={() => router.push('/signin')}
-                        className="
-                          text-green-600 
-                          hover:text-green-700 
-                          font-medium 
-                          underline 
-                          underline-offset-4
-                          transition-colors
-                        "
-                      >
-                        Connectez-vous ici
-                      </motion.button>
-                    </div>
-                  </form>
-                )}
-                {step !== 'success' && (
-                  <div className="hidden lg:block absolute right-0 top-1/2 transform -translate-y-1/2 h-4/5">
-                    <div className="w-px h-full bg-gradient-to-b from-transparent via-green-300 to-transparent"></div>
-                  </div>
-                )}
-                {step === 'livreur' && (
-                  <form className="space-y-4">
-                    <div>
-                      <label className="block text-gray-700 mb-1">Nom de l'entreprise</label>
-                      <div className="relative">
-                        <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500">
-                          <FiBriefcase />
-                        </span>
-                        <input
-                          type="text"
-                          name="entreprise"
-                          value={userData.entreprise}
-                          onChange={handleChange}
-                          className={`w-full py-2 pl-10 pr-3 border rounded-lg focus:ring-2 focus:ring-green-300 focus:border-green-500 outline-none transition ${errors.entreprise ? 'border-red-500' : 'border-gray-300'}`}
-                          placeholder="Nom de votre entreprise"
-                        />
-                      </div>
-                      {errors.entreprise && <p className="text-red-500 text-sm mt-1">{errors.entreprise}</p>}
-                    </div>
-                    
-                    <div>
-                      <label className="block text-gray-700 mb-1">Site web</label>
-                      <div className="relative">
-                        <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500">
-                          <FiLink />
-                        </span>
-                        <input
-                          type="url"
-                          name="siteWeb"
-                          value={userData.siteWeb}
-                          onChange={handleChange}
-                          className="w-full py-2 pl-10 pr-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-300 focus:border-green-500 outline-none transition"
-                          placeholder="https://www.votresite.com"
-                        />
-                      </div>
-                    </div>
-                    
-                    <div>
-                      <label className="block text-gray-700 mb-1">Numéro de CNI</label>
-                      <div className="relative">
-                        <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500">
-                          <FiCreditCard />
-                        </span>
-                        <input
-                          type="text"
-                          name="numeroCNI"
-                          value={userData.numeroCNI}
-                          onChange={handleChange}
-                          className={`w-full py-2 pl-10 pr-3 border rounded-lg focus:ring-2 focus:ring-green-300 focus:border-green-500 outline-none transition ${errors.numeroCNI ? 'border-red-500' : 'border-gray-300'}`}
-                          placeholder="Numéro de carte d'identité"
-                        />
-                      </div>
-                      {errors.numeroCNI && <p className="text-red-500 text-sm mt-1">{errors.numeroCNI}</p>}
-                    </div>
-                    
-                    <div>
-                      <label className="block text-gray-700 mb-1">Contact</label>
-                      <div className="relative">
-                        <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500">
-                          <FiPhone />
-                        </span>
-                        <input
-                          type="tel"
-                          name="contact"
-                          value={userData.contact}
-                          onChange={handleChange}
-                          className={`w-full py-2 pl-10 pr-3 border rounded-lg focus:ring-2 focus:ring-green-300 focus:border-green-500 outline-none transition ${errors.contact ? 'border-red-500' : 'border-gray-300'}`}
-                          placeholder="Numéro de téléphone"
-                        />
-                      </div>
-                      {errors.contact && <p className="text-red-500 text-sm mt-1">{errors.contact}</p>}
-                    </div>
-                    
-                    <div>
-                      <label className="block text-gray-700 mb-1">Ville du siège</label>
-                      <div className="relative">
-                        <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500">
-                          <FiMapPin />
-                        </span>
-                        <input
-                          type="text"
-                          name="villeSiege"
-                          value={userData.villeSiege}
-                          onChange={handleChange}
-                          className={`w-full py-2 pl-10 pr-3 border rounded-lg focus:ring-2 focus:ring-green-300 focus:border-green-500 outline-none transition ${errors.villeSiege ? 'border-red-500' : 'border-gray-300'}`}
-                          placeholder="Ville du siège social"
-                        />
-                      </div>
-                      {errors.villeSiege && <p className="text-red-500 text-sm mt-1">{errors.villeSiege}</p>}
-                    </div>
-                    
-                    <div className="flex gap-4 pt-4">
-                      <motion.button
-                        type="button"
-                        onClick={() => setStep('personal')}
-                        whileHover={{ scale: 1.03 }}
-                        whileTap={{ scale: 0.98 }}
-                        className="flex-1 border border-gray-300 hover:bg-gray-100 text-gray-700 py-3 px-6 rounded-lg font-medium flex items-center justify-center transition"
-                      >
-                        Retour
-                      </motion.button>
-                      
-                      <motion.button
-                        type="button"
-                        onClick={() => handleSubmit('livreur')}
-                        whileHover={{ scale: 1.03 }}
-                        whileTap={{ scale: 0.98 }}
-                        className="flex-1 bg-green-600 hover:bg-green-700 text-white py-3 px-6 rounded-lg font-medium flex items-center justify-center transition shadow-md"
-                      >
-                        Finaliser l'inscription
-                      </motion.button>
-                    </div>
-                  </form>
-                )}
-              </motion.div>
-            ) : (
-              <motion.div 
-                key="success"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.5 }}
-                className="w-full p-8 flex flex-col items-center justify-center text-center"
-              >
-                {showConfetti && <Confetti width={window.innerWidth} height={window.innerHeight} />}
-                
-                <motion.div
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  transition={{ delay: 0.2, type: "spring", stiffness: 120 }}
-                  className="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mb-6"
-                >
-                  <svg className="w-12 h-12 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7"></path>
-                  </svg>
-                </motion.div>
-                
-                <motion.h1 
-                  className="text-4xl font-bold text-green-600 mb-3"
-                  initial={{ y: 20, opacity: 0 }}
-                  animate={{ y: 0, opacity: 1 }}
-                  transition={{ delay: 0.4 }}
-                >
-                  Félicitations !
-                </motion.h1>
-                
-                <motion.p 
-                  className="text-xl text-gray-600 mb-6 max-w-lg"
-                  initial={{ y: 20, opacity: 0 }}
-                  animate={{ y: 0, opacity: 1 }}
-                  transition={{ delay: 0.6 }}
-                >
-                  Votre inscription a été enregistrée avec succès. Un email de bienvenue a été envoyé à {userData.email}.
-                </motion.p>
-                
-                <motion.button
-                  initial={{ y: 20, opacity: 0 }}
-                  animate={{ y: 0, opacity: 1 }}
-                  transition={{ delay: 0.8 }}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => router.push('/')}
-                  className="px-8 py-3 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg shadow-md transition"
-                >
-                  Accéder à votre compte
-                </motion.button>
+                {apiError}
               </motion.div>
             )}
-          </AnimatePresence>
-  
-          {/* Image Section */}
-          {step !== 'success' && (
-            <motion.div 
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.5 }}
-              className="hidden lg:block lg:w-1/2 bg-green-100 relative overflow-hidden"
-            >
-              <div className="absolute inset-0 bg-white" />
-              <div className="absolute inset-0 flex items-center justify-center p-8">
-                <div className="text-center max-w-md">
-                  <h2 className="text-3xl font-bold text-green-800 mt-8 mb-4">
-                    Rejoignez notre réseau de points relais
-                  </h2>
-                  <p className="text-green-700 mb-6">
-                    Simplifiez la livraison de vos colis et participez à une communauté grandissante de points relais et de livreurs à travers le pays.
-                  </p>
-                  <Image 
-                    src="/images/im10.jpg" 
-                    alt="Illustration de livraison" 
-                    width={500} 
-                    height={400}
-                    className="rounded-lg mx-auto object-cover"
-                  />
+
+            <form onSubmit={handleSubmit} className="space-y-4">
+              {/* Sélecteur de rôle */}
+              <div className="flex bg-gray-100 rounded-lg p-1">
+                <button
+                  type="button"
+                  onClick={() => handleRoleChange('CLIENT')}
+                  className={`flex-1 py-2 px-4 rounded-lg flex items-center justify-center gap-2 transition ${
+                    userData.role === 'CLIENT' 
+                      ? 'bg-white text-green-600 shadow-sm' 
+                      : 'text-gray-600 hover:text-green-600'
+                  }`}
+                >
+                  <FiUser /><span>Particulier</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleRoleChange('ENTERPRISE')}
+                  className={`flex-1 py-2 px-4 rounded-lg flex items-center justify-center gap-2 transition ${
+                    userData.role === 'ENTERPRISE' 
+                      ? 'bg-white text-green-600 shadow-sm' 
+                      : 'text-gray-600 hover:text-green-600'
+                  }`}
+                >
+                  <FiBriefcase /><span>Professionnel</span>
+                </button>
+              </div>
+
+              {/* Champs personnels */}
+              <div className="flex flex-col md:flex-row gap-4">
+                <div className="flex-1">
+                  <label className="block text-gray-700 text-sm mb-1">Prénom</label>
+                  <div className="relative"><FiUser className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" /><input type="text" name="firstName" value={userData.firstName} onChange={handleChange} className={`w-full py-2 pl-10 pr-3 border rounded-lg focus:ring-2 focus:outline-none transition ${errors.firstName ? 'border-red-500 ring-red-200' : 'border-gray-300 focus:ring-green-300 focus:border-green-500'}`} placeholder="Votre prénom" /></div>
+                  {errors.firstName && <p className="text-red-500 text-xs mt-1">{errors.firstName}</p>}
+                </div>
+                <div className="flex-1">
+                  <label className="block text-gray-700 text-sm mb-1">Nom</label>
+                  <div className="relative"><FiUser className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" /><input type="text" name="lastName" value={userData.lastName} onChange={handleChange} className={`w-full py-2 pl-10 pr-3 border rounded-lg focus:ring-2 focus:outline-none transition ${errors.lastName ? 'border-red-500 ring-red-200' : 'border-gray-300 focus:ring-green-300 focus:border-green-500'}`} placeholder="Votre nom" /></div>
+                  {errors.lastName && <p className="text-red-500 text-xs mt-1">{errors.lastName}</p>}
                 </div>
               </div>
-            </motion.div>
-          )}
+
+              {/* Champ d'entreprise conditionnel */}
+              <AnimatePresence>
+                {userData.role === 'ENTERPRISE' && (
+                  <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }}>
+                    <div className="pt-2">
+                      <label className="block text-gray-700 text-sm mb-1">Nom de l'entreprise</label>
+                      <div className="relative"><FiBriefcase className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" /><input type="text" name="companyName" value={userData.companyName} onChange={handleChange} className={`w-full py-2 pl-10 pr-3 border rounded-lg focus:ring-2 focus:outline-none transition ${errors.companyName ? 'border-red-500 ring-red-200' : 'border-gray-300 focus:ring-green-300 focus:border-green-500'}`} placeholder="Le nom de votre société" /></div>
+                      {errors.companyName && <p className="text-red-500 text-xs mt-1">{errors.companyName}</p>}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              <div>
+                <label className="block text-gray-700 text-sm mb-1">Email</label>
+                <div className="relative"><FiMail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" /><input type="email" name="email" value={userData.email} onChange={handleChange} className={`w-full py-2 pl-10 pr-3 border rounded-lg focus:ring-2 focus:outline-none transition ${errors.email ? 'border-red-500 ring-red-200' : 'border-gray-300 focus:ring-green-300 focus:border-green-500'}`} placeholder="votre.email@exemple.com" /></div>
+                {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
+              </div>
+              
+              <div>
+                <label className="block text-gray-700 text-sm mb-1">Téléphone (Optionnel)</label>
+                <div className="relative"><FiPhone className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" /><input type="tel" name="phone" value={userData.phone} onChange={handleChange} className="w-full py-2 pl-10 pr-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-300 focus:border-green-500 outline-none transition" placeholder="+237 6XX XXX XXX" /></div>
+              </div>
+
+              <div>
+                <label className="block text-gray-700 text-sm mb-1">Mot de passe</label>
+                <div className="relative">
+                  <FiLock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                  <input type={showPassword ? "text" : "password"} name="password" value={userData.password} onChange={handleChange} className={`w-full py-2 pl-10 pr-10 border rounded-lg focus:ring-2 focus:outline-none transition ${errors.password ? 'border-red-500 ring-red-200' : 'border-gray-300 focus:ring-green-300 focus:border-green-500'}`} placeholder="Minimum 6 caractères" />
+                  <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500 hover:text-gray-700"><span className="sr-only">Afficher/Cacher mot de passe</span>{showPassword ? <FiEyeOff /> : <FiEye />}</button>
+                </div>
+                {errors.password && <p className="text-red-500 text-xs mt-1">{errors.password}</p>}
+              </div>
+
+              <div className="pt-4">
+                <motion.button
+                  type="submit" disabled={loading} whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.98 }}
+                  className={`w-full py-3 px-6 rounded-lg font-medium flex items-center justify-center gap-2 transition shadow-md ${
+                    loading ? 'bg-green-400 cursor-not-allowed' : 'bg-green-600 hover:bg-green-700 text-white'
+                  }`}
+                >
+                  {loading ? (
+                    <>
+                      <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                      <span>Création en cours...</span>
+                    </>
+                  ) : "S'inscrire"}
+                </motion.button>
+              </div>
+
+              <div className="text-center mt-4">
+                <p className="text-sm text-gray-600">
+                  Vous avez déjà un compte?{' '}
+                  <Link href="/signin" className="text-green-600 hover:text-green-700 font-medium hover:underline">
+                    Connectez-vous
+                  </Link>
+                </p>
+              </div>
+            </form>
+          </motion.div>
+
+          {/* Image Section */}
+          <motion.div 
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.5 }}
+            className="hidden lg:block lg:w-1/2 bg-green-100 relative"
+          >
+            <Image 
+              src="/images/im10.jpg" 
+              alt="Illustration de livraison" 
+              layout="fill"
+              objectFit="cover"
+              className="opacity-90"
+            />
+             <div className="absolute inset-0 bg-gradient-to-br from-green-200/20 via-transparent to-green-500/10"></div>
+          </motion.div>
+
         </div>
       </main>
     </>
