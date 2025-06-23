@@ -13,8 +13,7 @@ import { useNavigation } from '@react-navigation/native';
 const ChatScreen = () => {
   const navigation = useNavigation();
   const handleChatPress = () => {
-    Alert.alert('Bouton cliqué', 'Vous avez appuyé sur « Chater ».');
-    console.log('Bouton cliqué');
+    Alert.alert('Bouton cliqué', 'Vous avez appuyé sur « de chat ».');
     // Ici, vous pouvez naviguer vers un autre écran ou lancer votre logique de chat.
   };
 
@@ -24,7 +23,7 @@ const ChatScreen = () => {
         onPress={handleChatPress}
         style={[styles.actionButton, { backgroundColor: '#FF6B00' }]}
       >
-        <Text style={styles.buttonText}>Chater</Text>
+        <Text style={styles.buttonText}>Commencer le chat</Text>
       </TouchableOpacity>
     </View>
   );

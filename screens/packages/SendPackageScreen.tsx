@@ -65,6 +65,16 @@ const SendPackageScreen = () => {
     cvv: '',
   });
 
+  
+  // Liste des livreurs disponibles
+  const [availableDeliverers, setAvailableDeliverers] = useState([
+    { id: "d1", name: "Express Delivery", percentage: 60 },
+    { id: "d2", name: "Rapid Transit", percentage: 50 },
+    { id: "d3", name: "Safe Hands", percentage: 45 },
+    { id: "d4", name: "Quick Move", percentage: 55 }
+  ])
+  const [selectedDeliverer, setSelectedDeliverer] = useState(null)
+
 
   // Global a la page
   const activeRelayPoints = getActiveRelayPoints()
@@ -92,10 +102,22 @@ const SendPackageScreen = () => {
       if (characteristics.valuable) price *= 1.4
       
       setBasePrice(Math.round(price))
-      setDeliveryPrice(needDelivery ? Math.round(price * 0.5) : 0)
-      setTotalPrice(Math.round(price + (needDelivery ? price * 0.5 : 0)))
+
+      // Calcul du prix de livraison en fonction du livreur sélectionnéAdd commentMore actions
+      if (needDelivery && selectedDeliverer) {
+      setDeliveryPrice(Math.round(price * selectedDeliverer.percentage / 100))
+      setTotalPrice(Math.round(price + (price * selectedDeliverer.percentage / 100)))
+    } else if (needDelivery) {
+      // Prix par défaut si aucun livreur n'est sélectionné
+      setDeliveryPrice(Math.round(price * 0.5))
+      setTotalPrice(Math.round(price + (price * 0.5)))
+    } else {
+      setDeliveryPrice(0)
+      setTotalPrice(Math.round(price))
     }
-  }, [weight, volume, characteristics, needDelivery])
+    }
+  }, [weight, volume, characteristics, needDelivery, selectedDeliverer])
+
 
   // Ouvrir modal quand le paiement change
   useEffect(() => {
@@ -116,6 +138,12 @@ const SendPackageScreen = () => {
                 receiverInfo.name && receiverInfo.firstName && receiverInfo.email && receiverInfo.phone &&
                 selectedRelayPoint)
       case 2: // Paiement
+
+       // Si livraison à domicile est sélectionnée, un livreur doit être choisiAdd commentMore actions
+       if (needDelivery) {
+        return paymentMethod && selectedDeliverer
+      }
+
         return paymentMethod
       case 3: // Confirmation
         return true
@@ -262,12 +290,15 @@ const SendPackageScreen = () => {
         relayPointId: selectedRelayPoint,
         paymentMethod,
         needDelivery,
+        delivererId: selectedDeliverer?.id,
+        delivererName: selectedDeliverer?.name,
+        delivererPercentage: selectedDeliverer?.percentage,
         totalPrice,
         status: "pending",
         senderId: user.id,
       })
 
-     setLoading(false)
+      setLoading(false)
       Alert.alert("Succès", `Votre colis a été enregistré avec le numéro de suivi ${newPackage.trackingNumber}`, [
         {
           text: "Voir les détails",
@@ -516,13 +547,48 @@ const SendPackageScreen = () => {
             <View style={styles.deliveryOption}>
               <Checkbox
                 status={needDelivery ? 'checked' : 'unchecked'}
-                onPress={() => setNeedDelivery(!needDelivery)}
+                onPress={() => {
+                  const newValue = !needDelivery;
+                  setNeedDelivery(newValue);
+                  if (!newValue) {
+                    setSelectedDeliverer(null);
+                  }
+                }}
               />
+
               <View style={styles.deliveryContainer}>
                 <Text style={styles.deliveryLabel}>Un livreur sera envoyé à domicile</Text>
-                <Text style={styles.deliveryLabel}>(+50% du prix de base)</Text>
+                <Text style={styles.deliveryLabel}>(prix selon le livreur choisi)</Text>
               </View>
             </View>
+
+            {needDelivery && (
+              <View style={styles.deliverersSection}>
+                <Text style={styles.sectionLabel}>Choisissez un livreur</Text>
+                {availableDeliverers.map((deliverer) => (
+                  <TouchableOpacity
+                    key={deliverer.id}
+                    style={[styles.delivererCard, selectedDeliverer?.id === deliverer.id && styles.selectedDelivererCard]}
+                    onPress={() => setSelectedDeliverer(deliverer)}
+                  >
+                    <View style={styles.delivererInfo}>
+                      <Text style={styles.delivererName}>{deliverer.name}</Text>
+                      <View style={styles.delivererDetails}>
+                        <Text style={styles.delivererPercentage}>+{deliverer.percentage}% du prix de base</Text>
+                      </View>
+                    </View>
+                    <RadioButton
+                      value={deliverer.id}
+                      status={selectedDeliverer?.id === deliverer.id ? 'checked' : 'unchecked'}
+                      onPress={() => setSelectedDeliverer(deliverer)}
+                    />
+                  </TouchableOpacity>
+                ))}
+                {!selectedDeliverer && needDelivery && (
+                  <HelperText type="error">Veuillez sélectionner un livreur</HelperText>
+                )}
+              </View>
+            )}
 
             <Text style={styles.sectionLabel}>Mode de paiement</Text>
             <RadioButton.Group onValueChange={setPaymentMethod} value={paymentMethod}>
@@ -625,7 +691,14 @@ const SendPackageScreen = () => {
                 <Text style={styles.summaryLabel}>Paiement:</Text>
                 <Text>Mode: {paymentMethod}</Text>
                 <Text>Total: {totalPrice} FCFA</Text>
-                {needDelivery && <Text>Avec livraison à domicile</Text>}
+                {needDelivery && (
+                  <>
+                    <Text>Avec livraison à domicile</Text>
+                    {selectedDeliverer && (
+                      <Text>Livreur: {selectedDeliverer.name} (+{selectedDeliverer.percentage}%)</Text>
+                    )}
+                  </>
+                )}
               </Card.Content>
             </Card>
           </Animatable.View>
@@ -643,9 +716,9 @@ const SendPackageScreen = () => {
         
         {/* Barre de progression */}
         <View style={styles.progressContainer}>
-          <ProgressBar 
-            progress={(currentStep + 1) / 4} 
-            color="#FF6B00" 
+          <ProgressBar
+            progress={(currentStep + 1) / 4}
+            color="#FF6B00"
             style={styles.progressBar}
           />
           <Text style={styles.progressText}>
@@ -946,6 +1019,41 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
 
+  deliverersSection: {
+    marginTop: 15,
+    marginBottom: 15,
+  },
+  delivererCard: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+  },
+  selectedDelivererCard: {
+    borderColor: '#FF6B00',
+    backgroundColor: '#FFF8F2',
+  },
+  delivererInfo: {
+    flex: 1,
+  },
+  delivererName: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 4,
+  },
+  delivererDetails: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  delivererPercentage: {
+    color: '#FF6B00',
+    fontWeight: 'bold',
+  },
 
   summaryCard: {
     marginBottom: 20,

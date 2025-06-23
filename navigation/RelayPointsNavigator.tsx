@@ -35,7 +35,7 @@ const RelayPointsNavigator = () => {
         },
       }}
     >
-      <Stack.Screen name="PointsRelais" component={RelayPointsTabs} options={{ title: "Points Relais" }} />
+      <Stack.Screen name="PointsRelais" component={RelayPointsTabs} options={{ title: "Points Relais Pick&Drop" }} />
       <Stack.Screen
         name="DetailPointRelais"
         component={RelayPointDetailScreen}

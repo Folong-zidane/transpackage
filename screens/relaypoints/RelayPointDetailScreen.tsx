@@ -1,7 +1,7 @@
 
 import { useState } from "react"
-import { View, StyleSheet, ScrollView, Alert } from "react-native"
-import { Text, Card, Button, Divider, Switch } from "react-native-paper"
+import { View, StyleSheet, ScrollView, Alert, TouchableOpacity } from "react-native"
+import { Text, Card, Button, Divider } from "react-native-paper"
 import { useRoute, useNavigation } from "@react-navigation/native"
 import { useRelayPoints } from "../../contexts/RelayPointContext"
 import { Ionicons } from "@expo/vector-icons"
@@ -41,7 +41,11 @@ const RelayPointDetailScreen = () => {
     <ScrollView style={styles.container}>
       <Animatable.View animation="fadeIn" duration={800}>
         <Card style={styles.card}>
-          <Card.Cover source={{ uri: relayPoint.imageUrl }} style={styles.coverImage} />
+
+          {/** ici le code de la petite carte qui indique le lieu de point relais
+            <Card.Cover source={{ uri: relayPoint.imageUrl }} style={styles.coverImage} /> 
+          */}
+          
           <Card.Content>
             <View style={styles.headerContainer}>
               <View>
@@ -49,15 +53,16 @@ const RelayPointDetailScreen = () => {
                 <Text style={styles.address}>{relayPoint.address}</Text>
               </View>
               {/** 
-              <View style={styles.statusContainer}>
-                <Text style={styles.statusLabel}>{relayPoint.isActive ? "Actif" : "Inactif"}</Text>
-                <Switch
-                  value={relayPoint.isActive}
-                  onValueChange={handleToggleStatus}
-                  disabled={loading}
-                  color="#2196F3"
-                />
-              </View>*/}
+                <View style={styles.statusContainer}>
+                  <Text style={styles.statusLabel}>{relayPoint.isActive ? "Actif" : "Inactif"}</Text>
+                  <Switch
+                    value={relayPoint.isActive}
+                    onValueChange={handleToggleStatus}
+                    disabled={loading}
+                    color="#2196F3"
+                  />
+                </View>
+              */}
             </View>
 
             <Divider style={styles.divider} />
@@ -124,10 +129,10 @@ const RelayPointDetailScreen = () => {
                 <Ionicons name="archive" size={24} color="#FF6B00" />
                 <Text style={styles.serviceText}>Réception de colis</Text>
               </View>
-              <View style={styles.serviceItem}>
+              <TouchableOpacity style={styles.serviceItem} onPress={() => {navigation.goBack()}}> 
                 <Ionicons name="return-down-back" size={24} color="#4CAF50" />
                 <Text style={styles.serviceText}>Retours</Text>
-              </View>
+              </TouchableOpacity>
             </View>
           </Card.Content>
         </Card>

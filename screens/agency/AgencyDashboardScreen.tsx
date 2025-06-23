@@ -10,6 +10,9 @@ import { Ionicons } from "@expo/vector-icons"
 import { PieChart } from "react-native-chart-kit"
 import { Dimensions } from "react-native"
 
+import { LineChart } from "react-native-chart-kit";
+
+
 const AgencyDashboardScreen = () => {
   const { user } = useAuth()
   const { relayPoints, getManagedRelayPoints } = useRelayPoints()
@@ -21,9 +24,17 @@ const AgencyDashboardScreen = () => {
   const inactiveRelayPoints = managedRelayPoints.filter((point) => !point.isActive)
 
   // Calculer les statistiques globales
+  {/** 
   const totalPackagesProcessed = managedRelayPoints.reduce((sum, point) => sum + point.stats.packagesProcessed, 0)
   const totalPackagesInTransit = managedRelayPoints.reduce((sum, point) => sum + point.stats.packagesInTransit, 0)
   const totalPackagesDelivered = managedRelayPoints.reduce((sum, point) => sum + point.stats.packagesDelivered, 0)
+
+  const chartConfig = {
+    backgroundGradientFrom: "#FFFFFF",
+    backgroundGradientTo: "#FFFFFF",
+    color: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
+  }
+
 
   // Données pour le graphique
   const chartData = [
@@ -43,23 +54,80 @@ const AgencyDashboardScreen = () => {
     },
   ]
 
+  */}
+  
+
+  {/** la partie des stats des colis en dur */}
+
+  const totalPackagesProcessed = 349;
+  const totalPackagesInTransit = 235;
+  const totalPackagesDelivered = 114;
+
+  const historyDates = ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"];
+
+  const historyProcessed = [20, 45, 28, 80, 99, 43, 50];
+  const historyInTransit = [10, 30, 20, 60, 70, 25, 40];
+  const historyDelivered = [5, 25, 15, 50, 60, 20, 35];
+
+  const screenWidth = Dimensions.get("window").width - 32;
+
   const chartConfig = {
-    backgroundGradientFrom: "#FFFFFF",
-    backgroundGradientTo: "#FFFFFF",
-    color: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
-  }
+    backgroundGradientFrom: "#ffffff",
+    backgroundGradientTo: "#ffffff",
+    decimalPlaces: 0,
+    color: (opacity = 1) => `rgba(33, 150, 243, ${opacity})`,        // bleu
+    labelColor: () => "#333333",
+    propsForDots: {
+      r: "4",
+      strokeWidth: "2",
+      stroke: "#2196F3",
+    },
+    propsForBackgroundLines: {
+      strokeDasharray: "", // lignes pleines
+    },
+  };
+
+  const data = {
+    labels: historyDates,
+    datasets: [
+      {
+        data: historyProcessed,
+        color: () => "rgba(255,107,0, 1)", // orange
+        strokeWidth: 2,
+        withDots: true,
+      },
+      {
+        data: historyInTransit,
+        color: () => "rgba(33,150,243, 1)", // bleu
+        strokeWidth: 2,
+      },
+      {
+        data: historyDelivered,
+        color: () => "rgba(76,175,80, 1)",  // vert
+        strokeWidth: 2,
+      },
+    ],
+    legend: ["Total", "En transit", "Livrés"],
+  };
+
+
 
   return (
     <ScrollView style={styles.container}>
-      <Animatable.View animation="fadeIn" duration={800} style={styles.header}>
-        <Text style={styles.greeting}>Bonjour, {user?.name}</Text>
-        <Text style={styles.subGreeting}>Tableau de bord de l'agence</Text>
-      </Animatable.View>
+      {/**  partie non importante
+        <Animatable.View animation="fadeIn" duration={800} style={styles.header}>
+          <Text style={styles.greeting}>Bonjour, {user?.name}</Text>
+          <Text style={styles.subGreeting}>Tableau de bord de l'agence</Text>
+        </Animatable.View>
+      */}
 
       <Animatable.View animation="fadeInUp" delay={300} duration={800}>
         <Card style={styles.card}>
           <Card.Content>
             <Title>Aperçu des points relais</Title>
+            {/**  bonne partie mais le contexte qui gere l'activation
+                 des points ne fonctionnen pas bien... a faire plus tard
+             
             <View style={styles.statsRow}>
               <View style={styles.statItem}>
                 <Ionicons name="location" size={24} color="#FF6B00" />
@@ -76,9 +144,37 @@ const AgencyDashboardScreen = () => {
                 <Text style={styles.statValue}>{inactiveRelayPoints.length}</Text>
                 <Text style={styles.statLabel}>Inactifs</Text>
               </View>
+            </View>*/}
+
+            <View style={styles.statsRow}>
+              <View style={styles.statItem}>
+                <Ionicons name="location" size={24} color="#FF6B00" />
+                <Text style={styles.statValue}>5</Text>
+                <Text style={styles.statLabel}>Total</Text>
+              </View>
+              <View style={styles.statItem}>
+                <Ionicons name="checkmark-circle" size={24} color="#4CAF50" />
+                <Text style={styles.statValue}>4</Text>
+                <Text style={styles.statLabel}>Actifs</Text>
+              </View>
+              <View style={styles.statItem}>
+                <Ionicons name="close-circle" size={24} color="#FF3B30" />
+                <Text style={styles.statValue}>1</Text>
+                <Text style={styles.statLabel}>Inactifs</Text>
+              </View>
             </View>
           </Card.Content>
-          <Card.Actions>
+        </Card>
+
+        {/** la partie pour la gestion */}
+        <View style={styles.actionButtonContainer}>
+          <Button
+              mode="contained"
+              onPress={() => navigation.navigate("Logistique" as never)}
+              style={styles.actionButton}
+            >
+              Créer ma logistique
+            </Button>
             <Button
               mode="contained"
               onPress={() => navigation.navigate("RelayPointManagement" as never)}
@@ -86,12 +182,15 @@ const AgencyDashboardScreen = () => {
             >
               Gérer les points relais
             </Button>
-          </Card.Actions>
-        </Card>
+        </View>
+
+        {/** Partie pour les statistiques des colis */}
 
         <Card style={styles.card}>
           <Card.Content>
             <Title>Statistiques des colis</Title>
+  
+            {/* Résumé rapide */}
             <View style={styles.statsRow}>
               <View style={styles.statItem}>
                 <Ionicons name="cube" size={24} color="#FF6B00" />
@@ -109,20 +208,18 @@ const AgencyDashboardScreen = () => {
                 <Text style={styles.statLabel}>Livrés</Text>
               </View>
             </View>
-
-            <View style={styles.chartContainer}>
-              <PieChart
-                data={chartData}
-                width={Dimensions.get("window").width - 64}
-                height={180}
-                chartConfig={chartConfig}
-                accessor="population"
-                backgroundColor="transparent"
-                paddingLeft="15"
-                absolute
-              />
-            </View>
+  
+            {/* Courbes d'évolution */}
+            <LineChart
+              data={data}
+              width={screenWidth}
+              height={220}
+              chartConfig={chartConfig}
+              bezier
+              style={styles.chart}
+            />
           </Card.Content>
+          
         </Card>
 
         <Text style={styles.sectionTitle}>Points relais les plus actifs</Text>
@@ -173,6 +270,14 @@ const AgencyDashboardScreen = () => {
         >
           Créer un nouveau point relais
         </Button>
+        <Button
+          mode="outlined"
+          onPress={() => navigation.navigate("CreatePersonnel" as never)}
+          style={styles.createButton}
+          icon="plus"
+        >
+          Ajouter un nouveau personnel
+        </Button>
       </Animatable.View>
     </ScrollView>
   )
@@ -221,9 +326,18 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: "#666",
   },
+  actionButtonContainer: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+   
+    padding: 8,
+   
+  },
   actionButton: {
-    marginLeft: "auto",
     backgroundColor: "#FF6B00",
+    marginHorizontal: 4,
+    
   },
   chartContainer: {
     alignItems: "center",

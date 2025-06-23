@@ -11,7 +11,7 @@ import { Badge } from "react-native-paper"
 import { View } from "react-native"
 import AgencyDashboardNavigator from "./AgencyDashboardNavigator"
 
-import TestScreen from "../screens/TestScreen"
+import TestScreen from "../screens/TestScreen" // pour les tests
 
 const Tab = createBottomTabNavigator()
 

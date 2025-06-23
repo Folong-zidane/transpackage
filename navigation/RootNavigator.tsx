@@ -10,6 +10,10 @@ import StatutPointRelaisScreen from "../screens/client/StatutPointRelaisScreen"
 import UploadDocumentsScreen from "../screens/client/UploadDocumentsScreen"
 import PointRelaisApprovalScreen from "../screens/client/PointRelaisApprovalScreen"
 import ChatScreen from "../screens/client/ChatScreen"
+import AssistantScreen from "../screens/AssistantScreen"
+import LogistiqueScreen from "../screens/agency/LogistiqueScreen"
+import CreatePersonnelScreen from "../screens/agency/CreatePersonnelScreen"
+
 
 
 const Stack = createStackNavigator()
@@ -31,8 +35,11 @@ const RootNavigator = () => {
           <Stack.Screen name="StatutPointRelais" component={StatutPointRelaisScreen} options={{ title: "Statut du Point Relais" }} />
           <Stack.Screen name="UploadDocuments" component={UploadDocumentsScreen} options={{ title: "Télécharger les documents" }} />
           <Stack.Screen name="PointRelaisApproval" component={PointRelaisApprovalScreen} options={{ title: "Approbation du Point Relais" }} />
+          <Stack.Screen name="Assistant" component={AssistantScreen} options={{ title: "Assistant" }} />
 
           <Stack.Screen name="Chat" component={ChatScreen} options={{ title: "Discuter" }} />
+          <Stack.Screen name="Logistique" component={LogistiqueScreen} options={{ headerShown: true, title: "Ma Logistique" }} />
+          <Stack.Screen name="CreatePersonnel" component={CreatePersonnelScreen} options={{ headerShown: true, title: "Créer un personnel" }} />
         </>
       ) : (
         <>

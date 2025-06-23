@@ -33,7 +33,7 @@ export default function TestScreen() {
       style={styles.fab}
       icon="plus"
       onPress={handleAddNotification}
-      label="Ajouter"
+      // label="Ajouter"
     />
     </View>
   );
@@ -74,3 +74,5 @@ const styles = StyleSheet.create({
   },
 
 });
+
+// cest bon ici

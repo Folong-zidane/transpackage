@@ -1,5 +1,5 @@
 
-import { View, StyleSheet, ScrollView } from "react-native"
+import { View, StyleSheet, ScrollView, TouchableOpacity } from "react-native"
 import { Text, Card, Button, Avatar } from "react-native-paper"
 import { useAuth } from "../contexts/AuthContext"
 import { usePackages } from "../contexts/PackageContext"
@@ -19,10 +19,21 @@ const HomeScreen = () => {
 
   return (
     <ScrollView style={styles.container}>
-      <Animatable.View animation="fadeIn" duration={800} style={styles.header}>
-        <Text style={styles.greeting}>Bonjour, {user?.name}</Text>
-        <Text style={styles.subGreeting}>Bienvenue sur Pick&Drop Link</Text>
+      <Animatable.View animation="fadeIn" duration={800} style={[styles.header, { flexDirection: 'row', alignItems: 'center' }]}>
+
+        <View>
+          <Text style={styles.greeting}>Bonjour, {user?.name}</Text>
+          <Text style={styles.subGreeting}>Bienvenue sur Pick&Drop Link</Text>
+        </View>
+        <TouchableOpacity style={styles.chatButton} onPress={() => navigation.navigate("Assistant" as never)}>
+          <Ionicons name="people-outline" size={20} color="white" />
+          {/* 
+          person-add-outline
+          person-outline
+          */}
+        </TouchableOpacity>
       </Animatable.View>
+
 
       <Animatable.View animation="fadeInUp" delay={300} duration={800}>
         <View style={styles.actionButtons}>
@@ -141,11 +152,33 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#f5f5f5",
   },
+  chatButton: {
+    position: "absolute",
+    top: 20,
+    right: 20,
+    backgroundColor: "#FF6B00",
+    padding: 10,
+    borderRadius: 50,
+    borderColor: "#FFF",
+    borderWidth: 2,
+    elevation: 4,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    zIndex: 1,
+    marginHorizontal: 16,
+  },
+
   header: {
     padding: 20,
     backgroundColor: "#FF6B00",
     borderBottomLeftRadius: 20,
     borderBottomRightRadius: 20,
+    justifyContent: 'flex-start',
   },
   greeting: {
     fontSize: 24,

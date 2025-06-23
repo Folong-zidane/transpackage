@@ -3,8 +3,6 @@ import {
   View, 
   ScrollView, 
   StyleSheet, 
-  Alert,
-  Dimensions,
   Animated
 } from 'react-native'
 import { 
@@ -18,8 +16,8 @@ import {
   TextInput,
   Switch,
   Divider,
-  List
-} from 'react-native-paper'
+  List,
+  Portal, Dialog, Provider as PaperProvider } from 'react-native-paper';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons'
 
 const PointRelaisApprovalScreen = ({ route, navigation }) => {
@@ -141,9 +139,20 @@ const PointRelaisApprovalScreen = ({ route, navigation }) => {
   }
  */}
 
-  const sauvegarderConfiguration = () => {
-    alert("Configuration sauvegardée")
-  }
+
+   const [visible, setVisible] = useState(false);
+ 
+   // 1) Fonction appelée au clic → ouvre le modal
+   const sauvegarderConfiguration = () => {
+     setVisible(true);
+   };
+ 
+   // 2) Fermeture du modal + navigation
+   const hideDialog = () => {
+     setVisible(false);
+     navigation.replace('Main');
+   };
+
 
   const voirContrat = () => {
     {/*navigation.navigate('ContratPointRelais', { pointRelaisId: pointRelaisData.id })*/}
@@ -409,6 +418,21 @@ const PointRelaisApprovalScreen = ({ route, navigation }) => {
           {saving ? 'Finalisation...' : 'Finaliser la configuration'}
         </Button>
       </View>
+
+      <Portal>
+        <Dialog visible={visible} onDismiss={hideDialog}>
+          <Dialog.Title>Bienvenue !</Dialog.Title>
+          <Dialog.Content>
+            <Paragraph>
+              Vous êtes maintenant membre de l’agence de point relais Pick&Drop.
+              Nous sommes ravis de vous accueillir !
+            </Paragraph>
+          </Dialog.Content>
+          <Dialog.Actions>
+            <Button onPress={hideDialog}>OK</Button>
+          </Dialog.Actions>
+        </Dialog>
+      </Portal>
 
       <View style={styles.bottomSpace} />
     </ScrollView>
