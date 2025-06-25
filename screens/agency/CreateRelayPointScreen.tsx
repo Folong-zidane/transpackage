@@ -18,16 +18,18 @@ const CreateRelayPointScreen = () => {
   const [openingHours, setOpeningHours] = useState("")
   const [isActive, setIsActive] = useState(true)
   const [location, setLocation] = useState({
-    latitude: 48.8566,
-    longitude: 2.3522,
+    latitude: 3.8480,
+    longitude: 11.5021,
   })
+  
   const [loading, setLoading] = useState(false)
   const [mapRegion, setMapRegion] = useState({
-    latitude: 48.8566,
-    longitude: 2.3522,
-    latitudeDelta: 0.01,
-    longitudeDelta: 0.01,
+    latitude: 3.8480,
+    longitude: 11.5021,
+    latitudeDelta: 0.03,
+    longitudeDelta: 0.03,
   })
+  
 
   const validateForm = () => {
     if (!name.trim()) {
@@ -115,8 +117,6 @@ const CreateRelayPointScreen = () => {
   return (
     <ScrollView style={styles.container}>
       <Animatable.View animation="fadeInUp" duration={800} style={styles.formContainer}>
-        <Text style={styles.title}>Créer un nouveau point relais</Text>
-
         <TextInput
           label="Nom du point relais"
           value={name}

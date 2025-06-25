@@ -173,7 +173,7 @@ const AgencyDashboardScreen = () => {
               onPress={() => navigation.navigate("Logistique" as never)}
               style={styles.actionButton}
             >
-              Créer ma logistique
+              Gérer ma logistique
             </Button>
             <Button
               mode="contained"
@@ -183,6 +183,14 @@ const AgencyDashboardScreen = () => {
               Gérer les points relais
             </Button>
         </View>
+
+        <Button
+          mode="contained"
+          onPress={() => navigation.navigate("PersonnelManagement" as never)}
+          style={styles.actionButton}
+        >
+          Gérer le personnel
+        </Button>
 
         {/** Partie pour les statistiques des colis */}
 

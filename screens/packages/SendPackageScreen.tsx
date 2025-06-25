@@ -10,11 +10,17 @@ import { Picker } from "@react-native-picker/picker"
 import * as ImagePicker from 'expo-image-picker'
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons'
 
+import { useNotifications } from "../../contexts/NotificationContext";
+
+
 const SendPackageScreen = () => {
   const navigation = useNavigation()
   const { addPackage } = usePackages()
   const { user } = useAuth()
   const { relayPoints, getActiveRelayPoints } = useRelayPoints()
+
+  // pour les notifications
+  const { addNotification } = useNotifications();
 
   // État pour l'étape actuelle (0-3)
   const [currentStep, setCurrentStep] = useState(0)
@@ -65,6 +71,8 @@ const SendPackageScreen = () => {
     cvv: '',
   });
 
+
+  // --- Section pour les livreurs
   
   // Liste des livreurs disponibles
   const [availableDeliverers, setAvailableDeliverers] = useState([
@@ -75,6 +83,20 @@ const SendPackageScreen = () => {
   ])
   const [selectedDeliverer, setSelectedDeliverer] = useState(null)
 
+  const [modalLivreurVisible, setModalLivreurVisible] = useState(false);
+
+  const handleSelectDeliverer = (deliverer) => {
+    setSelectedDeliverer(deliverer);
+    setModalLivreurVisible(false);
+  };
+
+  const openDelivererModal = () => {
+    setModalLivreurVisible(true);
+  };
+
+  const closeDelivererModal = () => {
+    setModalLivreurVisible(false);
+  };
 
   // Global a la page
   const activeRelayPoints = getActiveRelayPoints()
@@ -91,6 +113,11 @@ const SendPackageScreen = () => {
   }, [length, width, height])
 
   // Calcul du prix
+  // États à ajouter
+  const [serviceFeesPercentage, setServiceFeesPercentage] = useState(10); // 10% par défaut
+  const [serviceFees, setServiceFees] = useState(0);
+
+  // Calcul du prix modifié
   useEffect(() => {
     if (weight && volume) {
       let price = parseFloat(weight) * 2 + parseFloat(volume) * 1000 // Base de calcul
@@ -103,20 +130,27 @@ const SendPackageScreen = () => {
       
       setBasePrice(Math.round(price))
 
-      // Calcul du prix de livraison en fonction du livreur sélectionnéAdd commentMore actions
+      // Calcul des frais de service
+      const calculatedServiceFees = Math.round(price * serviceFeesPercentage / 100)
+      setServiceFees(calculatedServiceFees)
+
+      // Calcul du prix de livraison en fonction du livreur sélectionné
+      let deliveryAmount = 0
       if (needDelivery && selectedDeliverer) {
-      setDeliveryPrice(Math.round(price * selectedDeliverer.percentage / 100))
-      setTotalPrice(Math.round(price + (price * selectedDeliverer.percentage / 100)))
-    } else if (needDelivery) {
-      // Prix par défaut si aucun livreur n'est sélectionné
-      setDeliveryPrice(Math.round(price * 0.5))
-      setTotalPrice(Math.round(price + (price * 0.5)))
-    } else {
-      setDeliveryPrice(0)
-      setTotalPrice(Math.round(price))
+        deliveryAmount = Math.round(price * selectedDeliverer.percentage / 100)
+      } else if (needDelivery) {
+        // Prix par défaut si aucun livreur n'est sélectionné
+        deliveryAmount = Math.round(price * 0.5)
+      }
+      
+      setDeliveryPrice(deliveryAmount)
+      
+      // Calcul du prix total : prix de base + frais de service + frais de livraison
+      const total = Math.round(price + calculatedServiceFees + deliveryAmount)
+      setTotalPrice(total)
     }
-    }
-  }, [weight, volume, characteristics, needDelivery, selectedDeliverer])
+  }, [weight, volume, characteristics, needDelivery, selectedDeliverer, serviceFeesPercentage])
+
 
 
   // Ouvrir modal quand le paiement change
@@ -298,6 +332,15 @@ const SendPackageScreen = () => {
         senderId: user.id,
       })
 
+      addNotification({
+        title: "Nouveau colis deposé",
+        message: `Votre colis ${newPackage.trackingNumber} a été deposé avec succès au point relais ${selectedRelayPoint}.\nPar Mme/Mr ${user.name} et il a couté ${totalPrice} FCFA`,
+        type: "success",
+        read: false,
+        packageId: newPackage.id,
+        actionType: "viewPackage",
+      })
+
       setLoading(false)
       Alert.alert("Succès", `Votre colis a été enregistré avec le numéro de suivi ${newPackage.trackingNumber}`, [
         {
@@ -333,6 +376,11 @@ const SendPackageScreen = () => {
               style={styles.input}
               left={<TextInput.Icon icon="weight" />}
             />
+
+            <View style={styles.priceRow}>
+              <Text>Prix de base:</Text>
+              <Text style={styles.priceText}>{basePrice} FCFA</Text>
+            </View>
 
             <Text style={styles.sectionLabel}>Dimensions (cm)</Text>
             <View style={styles.dimensionsRow}>
@@ -521,14 +569,38 @@ const SendPackageScreen = () => {
       case 2:
         return (
           <Animatable.View animation="fadeInRight" duration={500}>
-            <Text style={styles.stepTitle}>Paiement</Text>
+
+            {/** les frais de service */}
+            <View style={styles.serviceFeesSection}>
+              <Text style={styles.sectionLabel}>Frais de nos services</Text>
+              <View style={styles.serviceFeesCard}>
+                <View style={styles.serviceFeesInfo}>
+                  <Text style={styles.serviceFeesLabel}>Frais de service</Text>
+                  <Text style={styles.serviceFeesDescription}>
+                    {serviceFeesPercentage}% du prix de base
+                  </Text>
+                  <Text style={styles.serviceFeesDescription}>
+                    ({basePrice.toFixed(2)} FCFA)
+                  </Text>
+                </View>
+                <View style={styles.serviceFeesAmount}>
+                  <Text style={styles.serviceFeesPercentage}>+{serviceFeesPercentage}%</Text>
+                  <Text style={styles.serviceFeesValue}>{serviceFees.toFixed(2)} FCFA</Text>
+                </View>
+              </View>
+            </View>
             
+            {/** le prix total */}
             <Card style={styles.priceCard}>
               <Card.Content>
                 <Title>Tarification</Title>
                 <View style={styles.priceRow}>
                   <Text>Prix de base:</Text>
                   <Text style={styles.priceText}>{basePrice} FCFA</Text>
+                </View>
+                <View style={styles.priceRow}>
+                  <Text>Frais de service:</Text>
+                  <Text style={styles.priceText}>+{serviceFees.toFixed(2)} FCFA</Text>
                 </View>
                 {needDelivery && (
                   <View style={styles.priceRow}>
@@ -562,6 +634,9 @@ const SendPackageScreen = () => {
               </View>
             </View>
 
+
+            {/* Section pour les livreurs
+
             {needDelivery && (
               <View style={styles.deliverersSection}>
                 <Text style={styles.sectionLabel}>Choisissez un livreur</Text>
@@ -588,7 +663,88 @@ const SendPackageScreen = () => {
                   <HelperText type="error">Veuillez sélectionner un livreur</HelperText>
                 )}
               </View>
+            )} */}
+
+
+            {needDelivery && (
+              <View style={styles.deliverersSection}>
+                <Text style={styles.sectionLabel}>Choisissez un livreur</Text>
+                
+                {/* Bouton pour ouvrir le modal */}
+                <TouchableOpacity
+                  style={styles.selectDelivererButton}
+                  onPress={openDelivererModal}
+                >
+                  <Text style={styles.selectDelivererText}>
+                    {selectedDeliverer 
+                      ? `${selectedDeliverer.name} (+${selectedDeliverer.percentage}%)`
+                      : "Sélectionner un livreur"
+                    }
+                  </Text>
+                  <Text style={styles.chevron}>›</Text>
+                </TouchableOpacity>
+      
+                {!selectedDeliverer && needDelivery && (
+                  <HelperText type="error">Veuillez sélectionner un livreur</HelperText>
+                )}
+              </View>
             )}
+      
+            {/* Modal pour choisir le livreur */}
+            <Modal
+              visible={modalLivreurVisible}
+              transparent={true}
+              animationType="slide"
+              onRequestClose={closeDelivererModal}
+            >
+              <View style={styles.modalLivreurBackground}>
+                <View style={styles.modalLivreurContent}>
+                  <View style={styles.modalLivreurHeader}>
+                    <Text style={styles.modalLivreurTitle}>Choisir un livreur</Text>
+                    <TouchableOpacity onPress={closeDelivererModal}>
+                      <Text style={styles.modalLivreurClose}>✕</Text>
+                    </TouchableOpacity>
+                  </View>
+      
+                  <ScrollView style={styles.modalLivreurList}>
+                    {availableDeliverers.map((deliverer) => (
+                      <TouchableOpacity
+                        key={deliverer.id}
+                        style={[
+                          styles.modalDelivererCard,
+                          selectedDeliverer?.id === deliverer.id && styles.modalSelectedDelivererCard
+                        ]}
+                        onPress={() => handleSelectDeliverer(deliverer)}
+                      >
+                        <View style={styles.delivererInfo}>
+                          <Text style={styles.delivererName}>{deliverer.name}</Text>
+                          <View style={styles.delivererDetails}>
+                            <Text style={styles.delivererPercentage}>
+                              +{deliverer.percentage}% du prix de base
+                            </Text>
+                          </View>
+                        </View>
+                        <RadioButton
+                          value={deliverer.id}
+                          status={selectedDeliverer?.id === deliverer.id ? 'checked' : 'unchecked'}
+                          onPress={() => handleSelectDeliverer(deliverer)}
+                        />
+                      </TouchableOpacity>
+                    ))}
+                  </ScrollView>
+      
+                  <View style={styles.modalLivreurActions}>
+                    <TouchableOpacity
+                      style={styles.modalLivreurCancelButton}
+                      onPress={closeDelivererModal}
+                    >
+                      <Text style={styles.modalLivreurCancelText}>Annuler</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </View>
+            </Modal>
+
 
             <Text style={styles.sectionLabel}>Mode de paiement</Text>
             <RadioButton.Group onValueChange={setPaymentMethod} value={paymentMethod}>
@@ -712,7 +868,6 @@ const SendPackageScreen = () => {
   return (
     <ScrollView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>Déposer un colis</Text>
         
         {/* Barre de progression */}
         <View style={styles.progressContainer}>
@@ -947,6 +1102,51 @@ const styles = StyleSheet.create({
   picker: {
     height: 50,
   },
+
+  // les frais de service
+  serviceFeesSection: {
+    marginBottom: 8,
+  },
+  serviceFeesCard: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: '#f8f9fa',
+    padding: 15,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#e9ecef',
+  },
+  serviceFeesInfo: {
+    flex: 1,
+  },
+  serviceFeesLabel: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 4,
+  },
+  serviceFeesDescription: {
+    fontSize: 14,
+    color: '#666',
+  },
+  serviceFeesAmount: {
+    alignItems: 'flex-end',
+  },
+  serviceFeesPercentage: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#007bff',
+    marginBottom: 2,
+  },
+  serviceFeesValue: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#28a745',
+  },
+  // fin de la partie des frais de service
+
+  // debut de la partie prix total
   priceCard: {
     marginBottom: 20,
     elevation: 2,
@@ -1054,6 +1254,96 @@ const styles = StyleSheet.create({
     color: '#FF6B00',
     fontWeight: 'bold',
   },
+  
+  // Styles pour le bouton de sélection
+  selectDelivererButton: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    padding: 15,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+    marginBottom: 8,
+  },
+  selectDelivererText: {
+    fontSize: 16,
+    color: '#333',
+    flex: 1,
+  },
+  chevron: {
+    fontSize: 20,
+    color: '#999',
+    marginLeft: 10,
+  },
+
+  // Styles pour le modal livreur
+  modalLivreurBackground: {
+    flex: 1,
+    justifyContent: 'center',
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    padding: 20,
+  },
+  modalLivreurContent: {
+    backgroundColor: 'white',
+    borderRadius: 15,
+    maxHeight: '70%',
+    overflow: 'hidden',
+  },
+  modalLivreurHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e0e0e0',
+  },
+  modalLivreurTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  modalLivreurClose: {
+    fontSize: 20,
+    color: '#999',
+    padding: 5,
+  },
+  modalLivreurList: {
+    padding: 15,
+  },
+  modalDelivererCard: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    padding: 15,
+    borderRadius: 8,
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+  },
+  modalSelectedDelivererCard: {
+    borderColor: '#FF6B00',
+    backgroundColor: '#FFF8F2',
+  },
+  modalLivreurActions: {
+    padding: 20,
+    borderTopWidth: 1,
+    borderTopColor: '#e0e0e0',
+  },
+  modalLivreurCancelButton: {
+    backgroundColor: '#f5f5f5',
+    padding: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  modalLivreurCancelText: {
+    fontSize: 16,
+    color: '#666',
+  },
+
+  // fin de la section pour le livreur
 
   summaryCard: {
     marginBottom: 20,

@@ -28,7 +28,7 @@ const ChatScreen = () => {
     </View>
   );
 };
-
+ 
 export default ChatScreen;
 
 const styles = StyleSheet.create({

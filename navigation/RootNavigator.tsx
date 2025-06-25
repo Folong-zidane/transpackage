@@ -13,7 +13,7 @@ import ChatScreen from "../screens/client/ChatScreen"
 import AssistantScreen from "../screens/AssistantScreen"
 import LogistiqueScreen from "../screens/agency/LogistiqueScreen"
 import CreatePersonnelScreen from "../screens/agency/CreatePersonnelScreen"
-
+import PersonnelManagementScreen from "../screens/agency/PersonnelManagementScreen"
 
 
 const Stack = createStackNavigator()
@@ -40,6 +40,7 @@ const RootNavigator = () => {
           <Stack.Screen name="Chat" component={ChatScreen} options={{ title: "Discuter" }} />
           <Stack.Screen name="Logistique" component={LogistiqueScreen} options={{ headerShown: true, title: "Ma Logistique" }} />
           <Stack.Screen name="CreatePersonnel" component={CreatePersonnelScreen} options={{ headerShown: true, title: "Créer un personnel" }} />
+          <Stack.Screen name="PersonnelManagement" component={PersonnelManagementScreen} options={{ headerShown: true, title: "Gestion du personnel" }} />
         </>
       ) : (
         <>

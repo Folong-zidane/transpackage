@@ -69,7 +69,12 @@ const MainTabNavigator = () => {
       {isAgency() && <Tab.Screen name="Gestion" options={{ headerShown: false }} component={AgencyDashboardNavigator} />}
       <Tab.Screen name="Notifications" options={{ headerShown: false }} component={NotificationsScreen} />
       <Tab.Screen name="Profil" options={{ headerShown: false }} component={ProfileScreen} />
-      <Tab.Screen name="Settings" options={{ headerShown: false }} component={TestScreen} />
+            <Tab.Screen name="Settings" options={{ headerShown: false }} component={TestScreen} /> 
+            
+      {/*  la ligne suivante est pour les tests
+
+      */}
+      
     </Tab.Navigator>
   )
 }

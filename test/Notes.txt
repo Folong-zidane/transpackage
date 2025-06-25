@@ -334,6 +334,49 @@ Souhaites-tu que je te génère une base de projet Expo + quelques écrans pour 
 
 
 
+// la theme.ts est le fichier de configuration de la thème de l'application
+
+import { MD3LightTheme, configureFonts } from "react-native-paper"
+
+// Définir des tailles de police plus grandes pour l'accessibilité
+const fontConfig = {
+  fontFamily: "System",
+  fontWeights: {
+    regular: "400",
+    medium: "500",
+    bold: "700",
+  },
+  sizes: {
+    small: 14,
+    medium: 16,
+    large: 18,
+    extraLarge: 22,
+  },
+}
+
+export const theme = {
+  ...MD3LightTheme,
+  colors: {
+    ...MD3LightTheme.colors,
+    primary: "#FF6B00",
+    secondary: "#2196F3",
+    tertiary: "#4CAF50",
+    error: "#FF3B30",
+    background: "#F5F5F5",
+    surface: "#FFFFFF",
+    // Améliorer le contraste pour l'accessibilité
+    onBackground: "#121212",
+    onSurface: "#121212",
+    onPrimary: "#FFFFFF",
+    onSecondary: "#FFFFFF",
+    onTertiary: "#FFFFFF",
+    onError: "#FFFFFF",
+  },
+  fonts: configureFonts({ config: fontConfig }),
+  // Augmenter la taille des éléments interactifs pour l'accessibilité
+  roundness: 8,
+}
+ 
 
 
 
@@ -346,3 +389,828 @@ Souhaites-tu que je te génère une base de projet Expo + quelques écrans pour 
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+Build details: https://expo.dev/accounts/docteurandy/projects/pick-and-drop/builds/aafbf6c9-275b-44f1-b1be-e4eaa7f90212
+
+Waiting for build to complete. You can press Ctrl+C to exit.
+√ Build finished
+
+🤖 Android app:
+https://expo.dev/artifacts/eas/n7B2Teph9opa94fN5kQLCb.aab
+
+
+
+
+
+| Package                          | Version installée | Version requise |
+| -------------------------------- | ----------------- | --------------- |
+| `@react-native-community/slider` | 4.5.6             | 4.5.5           |
+| `@react-native-picker/picker`    | 2.11.0            | 2.9.0           |
+| `lottie-react-native`            | 7.2.2             | 7.1.0           |
+| `react-native`                   | 0.76.7            | 0.76.9          |
+| `react-native-pager-view`        | 6.7.1             | 6.5.1           |
+
+
+
+
+
+    "react-native-web": "~0.19.13",
+    "react-native-webview": "13.12.5",
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+const translations = {
+    fr: {
+      // Navigation
+      profile: 'Profil',
+      send: 'Envoyer',
+      track: 'Suivi',
+      receive: 'Recevoir',
+      
+      // Profile Screen
+      preferredRelayPoint: 'Point relais préféré',
+      selectRelayPoint: 'Sélectionnez votre point relais préféré:',
+      noRelaySelected: 'Aucun point relais sélectionné',
+      relayPointHelp: 'Ce point relais sera utilisé par défaut pour vos envois et réceptions de colis.',
+      
+      // Account Settings
+      accountSettings: 'Paramètres du compte',
+      editProfile: 'Modifier le profil',
+      changePassword: 'Changer le mot de passe',
+      notifications: 'Notifications',
+      
+      // Preferences
+      preferences: 'Préférences',
+      language: 'Langue',
+      theme: 'Thème',
+      
+      // Help & Support
+      helpSupport: 'Aide et support',
+      helpCenter: 'Centre d\'aide',
+      contactUs: 'Contactez-nous',
+      about: 'À propos',
+      
+      // Buttons
+      logout: 'Déconnexion',
+      cancel: 'Annuler',
+      save: 'Sauvegarder',
+      close: 'Fermer',
+      change: 'Changer',
+      
+      // Themes
+      lightTheme: 'Clair',
+      darkTheme: 'Sombre',
+      autoTheme: 'Automatique',
+      
+      // Languages
+      french: 'Français',
+      english: 'English',
+      spanish: 'Español',
+      german: 'Deutsch',
+      
+      // Messages
+      success: 'Succès',
+      error: 'Erreur',
+      logoutConfirm: 'Êtes-vous sûr de vouloir vous déconnecter ?',
+      profileUpdated: 'Votre profil a été mis à jour avec succès',
+      passwordChanged: 'Votre mot de passe a été changé avec succès',
+      languageUpdated: 'La langue a été mise à jour',
+      themeUpdated: 'Le thème a été mis à jour',
+      relayPointUpdated: 'Votre point relais préféré a été mis à jour',
+      
+      // Form Fields
+      fullName: 'Nom complet',
+      email: 'Email',
+      phone: 'Téléphone',
+      currentPassword: 'Mot de passe actuel',
+      newPassword: 'Nouveau mot de passe',
+      confirmPassword: 'Confirmer le nouveau mot de passe',
+      
+      // Validation
+      passwordMismatch: 'Les mots de passe ne correspondent pas',
+      passwordTooShort: 'Le mot de passe doit contenir au moins 6 caractères',
+      
+      // Contact
+      supportEmail: 'support@votreapp.com',
+      supportPhone: '+33 1 23 45 67 89',
+      businessHours: 'Lun-Ven: 9h-18h',
+      
+      // About
+      appDescription: 'DeliveryApp est votre application de confiance pour l\'envoi et la réception de colis.',
+      networkDescription: 'Nous facilitons vos envois grâce à notre réseau de points relais partenaires dans toute la France.',
+      version: 'Version',
+      developedBy: 'Développé par',
+      termsOfService: 'Conditions d\'utilisation',
+      privacyPolicy: 'Politique de confidentialité',
+      
+      // User Types
+      client: 'Client',
+      agency: 'Agence',
+    },
+    
+    en: {
+      // Navigation
+      profile: 'Profile',
+      send: 'Send',
+      track: 'Track',
+      receive: 'Receive',
+      
+      // Profile Screen
+      preferredRelayPoint: 'Preferred Relay Point',
+      selectRelayPoint: 'Select your preferred relay point:',
+      noRelaySelected: 'No relay point selected',
+      relayPointHelp: 'This relay point will be used by default for your shipments and package receipts.',
+      
+      // Account Settings
+      accountSettings: 'Account Settings',
+      editProfile: 'Edit Profile',
+      changePassword: 'Change Password',
+      notifications: 'Notifications',
+      
+      // Preferences
+      preferences: 'Preferences',
+      language: 'Language',
+      theme: 'Theme',
+      
+      // Help & Support
+      helpSupport: 'Help & Support',
+      helpCenter: 'Help Center',
+      contactUs: 'Contact Us',
+      about: 'About',
+      
+      // Buttons
+      logout: 'Logout',
+      cancel: 'Cancel',
+      save: 'Save',
+      close: 'Close',
+      change: 'Change',
+      
+      // Themes
+      lightTheme: 'Light',
+      darkTheme: 'Dark',
+      autoTheme: 'Auto',
+      
+      // Languages
+      french: 'Français',
+      english: 'English',
+      spanish: 'Español',
+      german: 'Deutsch',
+      
+      // Messages
+      success: 'Success',
+      error: 'Error',
+      logoutConfirm: 'Are you sure you want to logout?',
+      profileUpdated: 'Your profile has been updated successfully',
+      passwordChanged: 'Your password has been changed successfully',
+      languageUpdated: 'Language has been updated',
+      themeUpdated: 'Theme has been updated',
+      relayPointUpdated: 'Your preferred relay point has been updated',
+      
+      // Form Fields
+      fullName: 'Full Name',
+      email: 'Email',
+      phone: 'Phone',
+      currentPassword: 'Current Password',
+      newPassword: 'New Password',
+      confirmPassword: 'Confirm New Password',
+      
+      // Validation
+      passwordMismatch: 'Passwords do not match',
+      passwordTooShort: 'Password must be at least 6 characters long',
+      
+      // Contact
+      supportEmail: 'support@yourapp.com',
+      supportPhone: '+33 1 23 45 67 89',
+      businessHours: 'Mon-Fri: 9am-6pm',
+      
+      // About
+      appDescription: 'DeliveryApp is your trusted application for sending and receiving packages.',
+      networkDescription: 'We facilitate your shipments through our network of partner relay points throughout France.',
+      version: 'Version',
+      developedBy: 'Developed by',
+      termsOfService: 'Terms of Service',
+      privacyPolicy: 'Privacy Policy',
+      
+      // User Types
+      client: 'Client',
+      agency: 'Agency',
+    },
+    
+    es: {
+      // Navigation
+      profile: 'Perfil',
+      send: 'Enviar',
+      track: 'Seguir',
+      receive: 'Recibir',
+      
+      // Profile Screen
+      preferredRelayPoint: 'Punto de Relevo Preferido',
+      selectRelayPoint: 'Selecciona tu punto de relevo preferido:',
+      noRelaySelected: 'Ningún punto de relevo seleccionado',
+      relayPointHelp: 'Este punto de relevo se utilizará por defecto para tus envíos y recepciones de paquetes.',
+      
+      // Account Settings
+      accountSettings: 'Configuración de Cuenta',
+      editProfile: 'Editar Perfil',
+      changePassword: 'Cambiar Contraseña',
+      notifications: 'Notificaciones',
+      
+      // Preferences
+      preferences: 'Preferencias',
+      language: 'Idioma',
+      theme: 'Tema',
+      
+      // Help & Support
+      helpSupport: 'Ayuda y Soporte',
+      helpCenter: 'Centro de Ayuda',
+      contactUs: 'Contáctanos',
+      about: 'Acerca de',
+      
+      // Buttons
+      logout: 'Cerrar Sesión',
+      cancel: 'Cancelar',
+      save: 'Guardar',
+      close: 'Cerrar',
+      change: 'Cambiar',
+      
+      // Themes
+      lightTheme: 'Claro',
+      darkTheme: 'Oscuro',
+      autoTheme: 'Automático',
+      
+      // Languages
+      french: 'Français',
+      english: 'English',
+      spanish: 'Español',
+      german: 'Deutsch',
+      
+      // Messages
+      success: 'Éxito',
+      error: 'Error',
+      logoutConfirm: '¿Estás seguro de que quieres cerrar sesión?',
+      profileUpdated: 'Tu perfil ha sido actualizado exitosamente',
+      passwordChanged: 'Tu contraseña ha sido cambiada exitosamente',
+      languageUpdated: 'El idioma ha sido actualizado',
+      themeUpdated: 'El tema ha sido actualizado',
+      relayPointUpdated: 'Tu punto de relevo preferido ha sido actualizado',
+      
+      // Form Fields
+      fullName: 'Nombre Completo',
+      email: 'Correo',
+      phone: 'Teléfono',
+      currentPassword: 'Contraseña Actual',
+      newPassword: 'Nueva Contraseña',
+      confirmPassword: 'Confirmar Nueva Contraseña',
+      
+      // Validation
+      passwordMismatch: 'Las contraseñas no coinciden',
+      passwordTooShort: 'La contraseña debe tener al menos 6 caracteres',
+      
+      // Contact
+      supportEmail: 'soporte@tuapp.com',
+      supportPhone: '+33 1 23 45 67 89',
+      businessHours: 'Lun-Vie: 9h-18h',
+      
+      // About
+      appDescription: 'DeliveryApp es tu aplicación de confianza para enviar y recibir paquetes.',
+      networkDescription: 'Facilitamos tus envíos a través de nuestra red de puntos de relevo asociados en toda Francia.',
+      version: 'Versión',
+      developedBy: 'Desarrollado por',
+      termsOfService: 'Términos de Servicio',
+      privacyPolicy: 'Política de Privacidad',
+      
+      // User Types
+      client: 'Cliente',
+      agency: 'Agencia',
+    },
+    
+    de: {
+      // Navigation
+      profile: 'Profil',
+      send: 'Senden',
+      track: 'Verfolgen',
+      receive: 'Empfangen',
+      
+      // Profile Screen
+      preferredRelayPoint: 'Bevorzugter Relaispunkt',
+      selectRelayPoint: 'Wählen Sie Ihren bevorzugten Relaispunkt:',
+      noRelaySelected: 'Kein Relaispunkt ausgewählt',
+      relayPointHelp: 'Dieser Relaispunkt wird standardmäßig für Ihre Sendungen und Paketzustellungen verwendet.',
+      
+      // Account Settings
+      accountSettings: 'Kontoeinstellungen',
+      editProfile: 'Profil bearbeiten',
+      changePassword: 'Passwort ändern',
+      notifications: 'Benachrichtigungen',
+      
+      // Preferences
+      preferences: 'Einstellungen',
+      language: 'Sprache',
+      theme: 'Theme',
+      
+      // Help & Support
+      helpSupport: 'Hilfe & Support',
+      helpCenter: 'Hilfezentrum',
+      contactUs: 'Kontaktiere uns',
+      about: 'Über',
+      
+      // Buttons
+      logout: 'Abmelden',
+      cancel: 'Abbrechen',
+      save: 'Speichern',
+      close: 'Schließen',
+      change: 'Ändern',
+      
+      // Themes
+      lightTheme: 'Hell',
+      darkTheme: 'Dunkel',
+      autoTheme: 'Auto',
+      
+      // Languages
+      french: 'Français',
+      english: 'English',
+      spanish: 'Español',
+      german: 'Deutsch',
+      
+      // Messages
+      success: 'Erfolg',
+      error: 'Fehler',
+      logoutConfirm: 'Sind Sie sicher, dass Sie sich abmelden möchten?',
+      profileUpdated: 'Ihr Profil wurde erfolgreich aktualisiert',
+      passwordChanged: 'Ihr Passwort wurde erfolgreich geändert',
+      languageUpdated: 'Die Sprache wurde aktualisiert',
+      themeUpdated: 'Das Theme wurde aktualisiert',
+      relayPointUpdated: 'Ihr bevorzugter Relaispunkt wurde aktualisiert',
+      
+      // Form Fields
+      fullName: 'Vollständiger Name',
+      email: 'E-Mail',
+      phone: 'Telefon',
+      currentPassword: 'Aktuelles Passwort',
+      newPassword: 'Neues Passwort',
+      confirmPassword: 'Neues Passwort bestätigen',
+      
+      // Validation
+      passwordMismatch: 'Passwörter stimmen nicht überein',
+      passwordTooShort: 'Das Passwort muss mindestens 6 Zeichen lang sein',
+      
+      // Contact
+      supportEmail: 'support@ihreapp.com',
+      supportPhone: '+33 1 23 45 67 89',
+      businessHours: 'Mo-Fr: 9-18 Uhr',
+      
+      // About
+      appDescription: 'DeliveryApp ist Ihre vertrauenswürdige Anwendung zum Senden und Empfangen von Paketen.',
+      networkDescription: 'Wir erleichtern Ihre Sendungen durch unser Netzwerk von Partner-Relaispunkten in ganz Frankreich.',
+      version: 'Version',
+      developedBy: 'Entwickelt von',
+      termsOfService: 'Nutzungsbedingungen',
+      privacyPolicy: 'Datenschutzrichtlinie',
+      
+      // User Types
+      client: 'Kunde',
+      agency: 'Agentur',
+    },
+  }
+
+export default translations
+
+
+
+
+
+
+
+
+
+
+
+
+
+import React from 'react';
+import { View, ScrollView, StyleSheet } from 'react-native';
+import { List, RadioButton, Divider, Button, Text, Card, Title, Paragraph } from 'react-native-paper';
+import { useTheme } from '../contexts/ThemeContext';
+import { useLanguage } from '../contexts/LanguageContext';
+
+const SettingsScreen: React.FC = () => {
+  const { themeMode, setThemeMode, isDarkMode } = useTheme();
+  const { currentLanguage, setLanguage, t, availableLanguages } = useLanguage();
+
+  return (
+    <ScrollView contentContainerStyle={styles.container}>
+      {/* Theme Settings */}
+      <List.Section>
+        <List.Subheader>{t('theme')}</List.Subheader>
+        <RadioButton.Group onValueChange={value => setThemeMode(value as any)} value={themeMode}>
+          <View style={styles.row}>
+            <RadioButton value="light" />
+            <Text onPress={() => setThemeMode('light')} style={styles.label}>
+              {t('lightTheme')}
+            </Text>
+          </View>
+          <Divider />
+          <View style={styles.row}>
+            <RadioButton value="dark" />
+            <Text onPress={() => setThemeMode('dark')} style={styles.label}>
+              {t('darkTheme')}
+            </Text>
+          </View>
+          <Divider />
+          <View style={styles.row}>
+            <RadioButton value="auto" />
+            <Text onPress={() => setThemeMode('auto')} style={styles.label}>
+              {t('autoTheme')}
+            </Text>
+          </View>
+        </RadioButton.Group>
+      </List.Section>
+
+      <Divider style={styles.divider} />
+
+      {/* Language Settings */}
+      <List.Section>
+        <List.Subheader>{t('language')}</List.Subheader>
+        <RadioButton.Group onValueChange={value => setLanguage(value as any)} value={currentLanguage}>
+          {availableLanguages.map(lang => (
+            <View key={lang.code} style={styles.row}>
+              <RadioButton value={lang.code} />
+              <Text onPress={() => setLanguage(lang.code)} style={styles.label}>
+                {lang.name}
+              </Text>
+            </View>
+          ))}
+        </RadioButton.Group>
+      </List.Section>
+
+      <Divider style={styles.divider} />
+
+      {/* Preview Controls */}
+      <Button mode="outlined" onPress={() => {}} style={styles.button}>
+        {t('theme')}: {themeMode.toUpperCase()} | {t('language')}: {currentLanguage.toUpperCase()}
+      </Button>
+
+      {/* Preview Sample Texts */}
+      <List.Section>
+        <List.Subheader>Preview Samples</List.Subheader>
+        <Card style={styles.card}>
+          <Card.Content>
+            <Title>{t('profile')}</Title>
+            <Paragraph>{t('appDescription')}</Paragraph>
+            <View style={styles.sampleButtons}>
+              <Button mode="contained" style={styles.sampleButton}>{t('send')}</Button>
+              <Button mode="outlined" style={styles.sampleButton}>{t('receive')}</Button>
+            </View>
+            <View style={styles.sampleButtons}>
+              <Button>{t('track')}</Button>
+            </View>
+          </Card.Content>
+        </Card>
+      </List.Section>
+
+      {/* Additional Text Tests */}
+      <List.Section>
+        <List.Subheader>Other Elements</List.Subheader>
+        <Text style={styles.testText}>{t('helpCenter')}</Text>
+        <Text style={styles.testText}>{t('contactUs')}</Text>
+        <Text style={[styles.testText, { fontStyle: 'italic' }]}>{t('about')}</Text>
+      </List.Section>
+    </ScrollView>
+  );
+};
+
+
+
+
+| Nom                  | Code Couleur | Observations                            |
+| -------------------- | ------------ | --------------------------------------- |
+| `onBackground`       | #E8E8E8    | Très clair, gris très pâle              |
+| `onSurface`          | #E8E8E8    | Même teinte que `onBackground`, lisible |
+| `onPrimaryContainer` | #FFE0B2    | Crème très pâle, tirant vers le beige   |
+| `onErrorContainer`   | #FFCDD2    | Rose très clair                         |
+| `inverseSurface`     | #E8E8E8    | Idem, gris très clair                   |
+
+
+
+
+// contexts/ThemeContext.tsx a été modifié pour 
+// ajouter des thèmes personnalisés
+
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react'
+import { useColorScheme } from 'react-native'
+import AsyncStorage from '@react-native-async-storage/async-storage'
+import { MD3LightTheme, MD3DarkTheme, configureFonts, Provider as PaperProvider } from 'react-native-paper'
+
+type ThemeMode = 'light' | 'dark' | 'auto'
+
+interface ThemeContextType {
+  themeMode: ThemeMode
+  isDarkMode: boolean
+  setThemeMode: (mode: ThemeMode) => void
+  theme: typeof MD3LightTheme
+}
+
+{/** fermer car ca impacte un peu sur la lisibilité 
+
+// Configuration des polices pour l'accessibilité
+const fontConfig = {
+  default: {
+    fontFamily: "System",
+    fontWeight: "400" as const,
+  },
+  bodySmall: {
+    fontFamily: "System",
+    fontSize: 14,
+    fontWeight: "400" as const,
+    lineHeight: 20,
+  },
+  bodyMedium: {
+    fontFamily: "System",
+    fontSize: 16,
+    fontWeight: "400" as const,
+    lineHeight: 24,
+  },
+  bodyLarge: {
+    fontFamily: "System",
+    fontSize: 18,
+    fontWeight: "400" as const,
+    lineHeight: 28,
+  },
+  headlineSmall: {
+    fontFamily: "System",
+    fontSize: 20,
+    fontWeight: "500" as const,
+    lineHeight: 28,
+  },
+  headlineMedium: {
+    fontFamily: "System",
+    fontSize: 24,
+    fontWeight: "500" as const,
+    lineHeight: 32,
+  },
+  headlineLarge: {
+    fontFamily: "System",
+    fontSize: 28,
+    fontWeight: "500" as const,
+    lineHeight: 36,
+  },
+  titleSmall: {
+    fontFamily: "System",
+    fontSize: 16,
+    fontWeight: "500" as const,
+    lineHeight: 24,
+  },
+  titleMedium: {
+    fontFamily: "System",
+    fontSize: 18,
+    fontWeight: "500" as const,
+    lineHeight: 28,
+  },
+  titleLarge: {
+    fontFamily: "System",
+    fontSize: 22,
+    fontWeight: "500" as const,
+    lineHeight: 32,
+  },
+  labelSmall: {
+    fontFamily: "System",
+    fontSize: 12,
+    fontWeight: "500" as const,
+    lineHeight: 16,
+  },
+  labelMedium: {
+    fontFamily: "System",
+    fontSize: 14,
+    fontWeight: "500" as const,
+    lineHeight: 20,
+  },
+  labelLarge: {
+    fontFamily: "System",
+    fontSize: 16,
+    fontWeight: "500" as const,
+    lineHeight: 24,
+  },
+}
+ */}
+
+
+// Thème clair
+const lightTheme = {
+  ...MD3LightTheme,
+  colors: {
+    ...MD3LightTheme.colors,
+    // Couleurs principales
+    primary: '#FF6B00',
+    onPrimary: '#FFFFFF',
+    primaryContainer: '#FFE5D1',
+    onPrimaryContainer: '#B24A00',
+    
+    // Couleurs secondaires
+    secondary: '#2196F3',
+    onSecondary: '#FFFFFF',
+    secondaryContainer: '#E3F2FD',
+    onSecondaryContainer: '#1565C0',
+    
+    // Couleurs tertiaires
+    tertiary: '#4CAF50',
+    onTertiary: '#FFFFFF',
+    tertiaryContainer: '#E8F5E8',
+    onTertiaryContainer: '#2E7D32',
+    
+    // Couleurs d'erreur
+    error: '#FF3B30',
+    onError: '#FFFFFF',
+    errorContainer: '#FFEBEE',
+    onErrorContainer: '#C62828',
+    
+    // Couleurs de surface
+    background: '#F5F5F5',
+    onBackground: '#121212',
+    surface: '#FFFFFF',
+    onSurface: '#121212',
+    surfaceVariant: '#F0F0F0',
+    onSurfaceVariant: '#616161',
+    
+    // Couleurs de contour
+    outline: '#E0E0E0',
+    outlineVariant: '#F5F5F5',
+    
+    // Couleurs spéciales
+    inverseSurface: '#2E2E2E',
+    inverseOnSurface: '#F5F5F5',
+    inversePrimary: '#FF8F00',
+    shadow: '#000000',
+    scrim: '#000000',
+    
+    // Couleurs de surface avec élévation
+    elevation: {
+      level0: 'transparent',
+      level1: '#FFFFFF',
+      level2: '#FAFAFA',
+      level3: '#F5F5F5',
+      level4: '#F0F0F0',
+      level5: '#EEEEEE',
+    },
+  },
+  // fonts: configureFonts({ config: fontConfig }),
+  roundness: 12,
+}
+
+// Thème sombre
+const darkTheme = {
+  ...MD3DarkTheme,
+  colors: {
+    ...MD3DarkTheme.colors,
+    // Couleurs principales
+    primary: '#FF8F00',
+    onPrimary: '#000000',
+    primaryContainer: '#E65100',
+    onPrimaryContainer: '#FFE0B2',
+    
+    // Couleurs secondaires
+    secondary: '#64B5F6',
+    onSecondary: '#000000',
+    secondaryContainer: '#1976D2',
+    onSecondaryContainer: '#E3F2FD',
+    
+    // Couleurs tertiaires
+    tertiary: '#81C784',
+    onTertiary: '#000000',
+    tertiaryContainer: '#388E3C',
+    onTertiaryContainer: '#C8E6C9',
+    
+    // Couleurs d'erreur
+    error: '#FF6B6B',
+    onError: '#000000',
+    errorContainer: '#D32F2F',
+    onErrorContainer: '#FFCDD2',
+    
+    // Couleurs de surface
+    background: '#0F0F0F',
+    onBackground: '#E8E8E8',
+    surface: '#1A1A1A',
+    onSurface: '#FF6B00', // pour le texte
+    surfaceVariant: '#2A2A2A',
+    onSurfaceVariant: '#BDBDBD',
+    
+    // Couleurs de contour
+    outline: '#424242',
+    outlineVariant: '#2A2A2A',
+    
+    // Couleurs spéciales
+    inverseSurface: '#E8E8E8',
+    inverseOnSurface: '#2A2A2A',
+    inversePrimary: '#FF6B00',
+    shadow: '#000000',
+    scrim: '#000000',
+    
+    // Couleurs de surface avec élévation
+    elevation: {
+      level0: 'transparent',
+      level1: '#1F1F1F',
+      level2: '#242424',
+      level3: '#2A2A2A',
+      level4: '#2F2F2F',
+      level5: '#333333',
+    },
+  },
+  //fonts: configureFonts({ config: fontConfig }),
+  roundness: 12,
+}
+
+const ThemeContext = createContext<ThemeContextType | undefined>(undefined)
+
+interface ThemeProviderProps {
+  children: ReactNode
+}
+
+export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
+  const [themeMode, setThemeModeState] = useState<ThemeMode>('light')
+  const systemColorScheme = useColorScheme()
+
+  const isDarkMode = themeMode === 'dark' || (themeMode === 'auto' && systemColorScheme === 'dark')
+  const theme = isDarkMode ? darkTheme : lightTheme
+
+  useEffect(() => {
+    loadThemePreference()
+  }, [])
+
+  const loadThemePreference = async () => {
+    try {
+      const savedTheme = await AsyncStorage.getItem('theme_preference')
+      if (savedTheme && ['light', 'dark', 'auto'].includes(savedTheme)) {
+        setThemeModeState(savedTheme as ThemeMode)
+      }
+    } catch (error) {
+      console.error('Error loading theme preference:', error)
+    }
+  }
+
+  const setThemeMode = async (mode: ThemeMode) => {
+    try {
+      await AsyncStorage.setItem('theme_preference', mode)
+      setThemeModeState(mode)
+    } catch (error) {
+      console.error('Error saving theme preference:', error)
+      // Fallback: set theme locally even if storage fails
+      setThemeModeState(mode)
+    }
+  }
+
+  const contextValue: ThemeContextType = {
+    themeMode,
+    isDarkMode,
+    setThemeMode,
+    theme,
+  }
+
+  return (
+    <ThemeContext.Provider value={contextValue}>
+      <PaperProvider theme={theme}>
+        {children}
+      </PaperProvider>
+    </ThemeContext.Provider>
+  )
+}
+
+export const useTheme = () => {
+  const context = useContext(ThemeContext)
+  if (context === undefined) {
+    throw new Error('useTheme must be used within a ThemeProvider')
+  }
+  return context
+}
+
+// Export des thèmes pour usage externe si nécessaire
+export { lightTheme, darkTheme }
